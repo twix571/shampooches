@@ -77,9 +77,8 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # Logging Configuration (Production)
-# In production, integrate with monitoring services like Sentry
-# Configure Django logging to send errors to a monitoring service
-# (e.g., Sentry) or standard output (for containerized environments).
+# Configure Django logging to send errors to console
+# Sentry integration is configured separately below
 
 LOGGING = {
     'version': 1,
@@ -97,10 +96,6 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'json',
-        },
-        'sentry': {
-            'class': 'sentry_sdk.integrations.django.DjangoIntegration',
-            'level': 'ERROR',
         },
     },
     'root': {
