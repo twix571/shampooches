@@ -2,6 +2,7 @@
 Production Django settings for myproject project.
 """
 import logging
+import dj_database_url
 
 from .base import *
 
