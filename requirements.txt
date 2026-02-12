@@ -10,7 +10,7 @@ whitenoise==6.7.0
 django-storages==1.14.4
 dj-database-url==2.3.0
 psycopg2-binary==2.9.9
-django-debug-toolbar==4.4.6
+django-anymail[sendgrid]==14.0
 
 # Code Quality & Testing
 flake8==7.1.1
@@ -21,4 +21,3 @@ factory-boy==3.3.3
 
 # API Enhancements
 drf-spectacular==0.27.2
-django-anymail[sendgrid]==14.0

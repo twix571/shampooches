@@ -37,19 +37,17 @@ INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django_browser_reload
 
 DEBUG = False
 
-# WhiteNoise for static file serving in production
-MIDDLEWARE = [
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-] + MIDDLEWARE
-
 # Remove development-only middleware
 MIDDLEWARE = [m for m in MIDDLEWARE if 'django_browser_reload' not in m and 'debug_toolbar' not in m]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 WHITENOISE_USE_FINDERS = True
-WHITENOISE_IGNORE_MISSING_FILE = True
+WHITENOISE_IGNORE_MISSING_FILE = False
 WHITENOISE_MANIFEST_STRICT = True
+WHITENOISE_MAX_AGE = 31536000  # 1 year
+WHITENOISE_GZIP_ALL_EXTENSIONS = True
+WHITENOISE_GZIP_EXCLUDE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.woff', '.woff2']
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
@@ -150,12 +148,12 @@ if SENTRY_DSN:
 
 # Content Security Policy (CSP)
 # Implement CSP headers to strictly define where scripts, styles, and media can load from.
-# Override with more restrictive settings for production
+# Override with more restrictive settings for production - no 'unsafe-inline' or 'unsafe-eval'
 
 CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://jsdelivr.net")
-CSP_STYLE_SRC = ("'self'", "https://fonts.googleapis.com")
-CSP_IMG_SRC = ("'self'", "data:",)
+CSP_SCRIPT_SRC = ("'self'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://jsdelivr.net", "https://unpkg.com")
+CSP_STYLE_SRC = ("'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
 CSP_FONT_SRC = ("'self'", "data:", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
 CSP_CONNECT_SRC = ("'self'",)
 CSP_FORM_ACTION = ("'self'",)
@@ -165,6 +163,7 @@ CSP_BASE_URI = ("'self'",)
 CSP_FRAME_SRC = ("'none'",)
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REPORT_URI = os.getenv('CSP_REPORT_URI',)
+CSP_ENFORCE = True
 
 # Rename Admin URL
 # Change the default admin/ URL path to something unpredictable to reduce brute-force attempts.
