@@ -15,6 +15,7 @@ builder = "nixpacks"
 # SECRET_KEY=<generate secure key>
 # ALLOWED_HOSTS=<your-railway-domain>.railway.app
 # DJANGO_SETTINGS_MODULE=myproject.settings.production (optional: command sets this)
+# SECURE_SSL_REDIRECT=False (set to False for Railway health check compatibility)
 
 # Volume mounts (add in Railway dashboard)
 # - Go to web service → Settings → Volumes
@@ -29,8 +30,8 @@ builder = "nixpacks"
 # Health check endpoint (Django has /health/ endpoint enabled)
 [services.web.healthchecks.liveness]
 path = "/health/"
-port = $PORT
-initialDelaySeconds = 10
+# Use Railway's PORT environment variable for health check
+initialDelaySeconds = 15
 
 # PostgreSQL database (add in Railway dashboard)
 # Service type: PostgreSQL

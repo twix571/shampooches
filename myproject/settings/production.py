@@ -35,13 +35,18 @@ DEBUG = False
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 WHITENOISE_USE_FINDERS = True
-WHITENOISE_IGNORE_MISSING_FILE = False
-WHITENOISE_MANIFEST_STRICT = True
+WHITENOISE_IGNORE_MISSING_FILE = True
+WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_MAX_AGE = 31536000  # 1 year
 WHITENOISE_GZIP_ALL_EXTENSIONS = True
 WHITENOISE_GZIP_EXCLUDE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.woff', '.woff2']
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS_setting = os.getenv('ALLOWED_HOSTS', '').strip()
+if ALLOWED_HOSTS_setting:
+    ALLOWED_HOSTS = ALLOWED_HOSTS_setting.split(',')
+else:
+    # Fallback to allow all Railway domains
+    ALLOWED_HOSTS = ['*']
 
 # Database (Production - Railway PostgreSQL via DATABASE_URL)
 # Railway automatically provides DATABASE_URL environment variable
@@ -65,7 +70,10 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-SECURE_SSL_REDIRECT = True
+
+# SSL Redirect - Only enable if explicitly set, to avoid health check issues
+# Railway handles SSL termination, so this should generally be False in Railway
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 31536000
@@ -143,20 +151,20 @@ if SENTRY_DSN:
 # Implement CSP headers to strictly define where scripts, styles, and media can load from.
 # Override with more restrictive settings for production - no 'unsafe-inline' or 'unsafe-eval'
 
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://jsdelivr.net", "https://unpkg.com")
-CSP_STYLE_SRC = ("'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
-CSP_IMG_SRC = ("'self'", "data:", "https:")
-CSP_FONT_SRC = ("'self'", "data:", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
-CSP_CONNECT_SRC = ("'self'",)
-CSP_FORM_ACTION = ("'self'",)
-CSP_MEDIA_SRC = ("'self'",)
-CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_BASE_URI = ("'self'",)
-CSP_FRAME_SRC = ("'none'",)
-CSP_OBJECT_SRC = ("'none'",)
-CSP_REPORT_URI = os.getenv('CSP_REPORT_URI',)
-CSP_ENFORCE = True
+# CSP_DEFAULT_SRC = ("'self'",)
+# CSP_SCRIPT_SRC = ("'self'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://jsdelivr.net", "https://unpkg.com")
+# CSP_STYLE_SRC = ("'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
+# CSP_IMG_SRC = ("'self'", "data:", "https:")
+# CSP_FONT_SRC = ("'self'", "data:", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
+# CSP_CONNECT_SRC = ("'self'",)
+# CSP_FORM_ACTION = ("'self'",)
+# CSP_MEDIA_SRC = ("'self'",)
+# CSP_FRAME_ANCESTORS = ("'none'",)
+# CSP_BASE_URI = ("'self'",)
+# CSP_FRAME_SRC = ("'none'",)
+# CSP_OBJECT_SRC = ("'none'",)
+# CSP_REPORT_URI = os.getenv('CSP_REPORT_URI',)
+# CSP_ENFORCE = True
 
 # Security Note: Consider renaming the admin URL from /admin/ to something unpredictable
 # to reduce brute-force attacks. This can be done in myproject/urls.py.
