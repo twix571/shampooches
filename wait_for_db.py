@@ -48,10 +48,11 @@ def run_migrations():
 def start_gunicorn():
     """Start gunicorn with production settings."""
     print("Starting gunicorn...")
-    # Use the same settings as production
+    # Ensure DJANGO_SETTINGS_MODULE is set for gunicorn
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings.production')
     # Subprocess will inherit the environment including DATABASE_URL
     subprocess.run([
-        'gunicorn', 
+        'gunicorn',
         'myproject.wsgi:application',
         '--bind', '0.0.0.0:8000',
         '--timeout', '300',
