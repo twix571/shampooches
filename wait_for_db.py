@@ -45,6 +45,22 @@ def run_migrations():
     call_command('migrate', '--noinput')
     print("Migrations completed successfully")
 
+def collect_static():
+    """Collect static files."""
+    print("Collecting static files...")
+    # Set up Django settings
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings.production')
+    
+    import django
+    django.setup()
+    
+    from django.core.management import call_command
+    try:
+        call_command('collectstatic', '--noinput', '--clear')
+        print("Static files collected successfully")
+    except Exception as e:
+        print(f"Warning: Static file collection failed: {e}")
+
 def start_gunicorn():
     """Start gunicorn with production settings."""
     print("Starting gunicorn...")
@@ -70,6 +86,7 @@ if __name__ == '__main__':
     
     if wait_for_db():
         run_migrations()
+        collect_static()
         start_gunicorn()
     else:
         print("Database connection failed, exiting...")
