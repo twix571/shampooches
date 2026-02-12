@@ -49,7 +49,6 @@ INSTALLED_APPS = [
 # Development-only apps
 if DEBUG:
     INSTALLED_APPS += [
-        'django_browser_reload',
         'debug_toolbar',
     ]
 
@@ -73,7 +72,6 @@ MIDDLEWARE = [
 
 # Development-only middleware
 if DEBUG:
-    MIDDLEWARE.insert(4, 'django_browser_reload.middleware.BrowserReloadMiddleware')
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'myproject.urls'
