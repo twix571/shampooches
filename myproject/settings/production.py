@@ -29,9 +29,6 @@ EMAIL_HOST_PASSWORD = None
 # Production-specific email settings
 EMAIL_SUBJECT_PREFIX = '[Shampooches] '
 
-# Anymail integration
-INSTALLED_APPS += ['anymail']
-
 # Remove development-only apps
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django_browser_reload' and app != 'debug_toolbar']
 
