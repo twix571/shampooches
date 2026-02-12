@@ -96,11 +96,13 @@ urlpatterns = [
     path('api/v1/', include('mainapp.api_v1_urls')),
     path('api/', include(router.urls)),
     
-    # Development tools
-    path('__reload__/', include('django_browser_reload.urls')),
-    
-    # Django admin interface
-    path('admin/', admin.site.urls),
+    # Development tools (only in DEBUG mode)
+]
+if settings.DEBUG:
+    urlpatterns.append(path('__reload__/', include('django_browser_reload.urls')))
+
+# Django admin interface
+urlpatterns.append(path('admin/', admin.site.urls))
     
     # Admin interface (non-obvious URL for security) - disabled for development
     # Uncomment in production and set DJANGO_ADMIN_URL environment variable
