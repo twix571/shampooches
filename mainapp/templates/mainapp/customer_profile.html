@@ -1,0 +1,267 @@
+{% extends 'mainapp/base.html' %}
+
+{% block title %}My Profile - Shampooches{% endblock %}
+
+{% block content %}
+    {% include 'mainapp/partials/customer_nav.html' %}
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">My Profile</h1>
+            <p class="text-gray-600 mt-1">View and update your account information</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Profile Information -->
+            <div class="lg:col-span-1">
+                <!-- Account Information (Collapsible) -->
+                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                    <summary class="px-6 py-4 cursor-pointer flex items-center justify-between list-none hover:bg-gray-50 transition-colors">
+                        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                            Account Information
+                            <span class="ml-3 px-3 py-1 bg-teal-100 text-teal-700 text-sm font-medium rounded-full">Customer</span>
+                        </h2>
+                        <svg class="w-5 h-5 text-teal-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </summary>
+
+                    <div class="border-t border-gray-200">
+                        <form method="post" action="{% url 'customer_profile' %}" class="px-6 py-6 pb-4 space-y-5">
+                            {% csrf_token %}
+
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    value="{{ user.username }}"
+                                    class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed"
+                                    readonly
+                                >
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    id="email"
+                                    value="{{ user.email }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                                    required
+                                >
+                            </div>
+
+                            <div>
+                                <label for="full_name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input
+                                    type="text"
+                                    name="full_name"
+                                    id="full_name"
+                                    value="{{ user.first_name }} {% if user.last_name %}{{ user.last_name }}{% endif %}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                                    required
+                                >
+                            </div>
+
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    id="phone"
+                                    value="{{ user.phone|default:'' }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                                >
+                            </div>
+
+                            <details class="group mb-0">
+                        <summary class="flex items-center justify-between list-none cursor-pointer text-sm font-bold text-black hover:text-teal-600 py-2 hover:bg-gray-50 rounded-md px-2 -mx-2">
+                            Change Password
+                            <svg class="w-4 h-4 text-black group-hover:text-teal-600 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+
+                        <div class="space-y-3 mt-3">
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="password"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                                    placeholder="Leave blank to keep current password"
+                                >
+                            </div>
+
+                            <div>
+                                <label for="password_confirm" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                <input
+                                    type="password"
+                                    name="password_confirm"
+                                    id="password_confirm"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                                    placeholder="Re-enter new password"
+                                >
+                            </div>
+                        </div>
+                    </details>
+
+                    <button
+                        type="submit"
+                        class="w-full py-2 font-medium bg-teal-500 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                    >
+                        Update Profile
+                    </button>
+                        </form>
+                    </div>
+                </details>
+
+                <!-- Dog Profiles -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-gray-800">My Dogs</h2>
+                        <button
+                            data-modal-url="{% url 'add_dog_modal' %}"
+                            data-modal-name="add_dog_modal"
+                            class="px-3 py-1.5 text-sm font-medium rounded-lg transition bg-teal-500 text-white hover:bg-teal-700"
+                        >
+                            Add Dog
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        {% for dog in user.dogs.all %}
+                            <div class="flex items-start justify-between p-4 bg-gray-50 rounded-lg mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <h3 class="font-semibold text-gray-800">{{ dog.name }}</h3>
+                                        {% if dog.breed %}
+                                            <span class="px-2 py-0.5 text-blue-700 text-xs font-medium rounded-full">{{ dog.breed.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-600 space-y-1">
+                                        {% if dog.weight %}
+                                            <div><span class="font-medium">Weight:</span> {{ dog.weight }} lbs</div>
+                                        {% endif %}
+                                        {% if dog.age %}
+                                            <div><span class="font-medium">Age:</span> {{ dog.age }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end space-y-2">
+                                    <button
+                                        data-modal-url="{% url 'book_with_dog' dog.id %}"
+                                        data-modal-name="booking"
+                                        class="w-full text-left px-3 py-1.5 text-teal-600 text-sm font-medium rounded-lg transition hover:bg-teal-700 hover:text-white"
+                                    >
+                                        Book
+                                    </button>
+                                    <button
+                                        data-modal-url="{% url 'edit_dog_modal' dog.id %}"
+                                        data-modal-name="edit_dog_modal"
+                                        class="w-full text-left px-3 py-1.5 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-300 transition"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        data-modal-url="{% url 'request_dog_deletion_modal' dog.id %}"
+                                        data-modal-name="request_dog_deletion_modal"
+                                        class="w-full text-left px-3 py-1.5 text-red-600 text-sm font-medium rounded-lg hover:bg-red-200 transition"
+                                    >
+                                        Request Deletion
+                                    </button>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center py-8">
+                                <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                </svg>
+                                <p class="text-gray-500 mb-4">No dog profiles yet</p>
+                                <button
+                                    data-modal-url="{% url 'add_dog_modal' %}"
+                                    data-modal-name="add_dog_modal"
+                                    class="inline-block px-4 py-2 text-sm font-medium rounded-lg transition bg-teal-500 text-white hover:bg-teal-700"
+                                >
+                                    Add Your First Dog
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking History -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-800">Booking History</h2>
+                    </div>
+
+                    <div class="p-6">
+                        {% if customer_appointments %}
+                            <div class="space-y-4">
+                                {% for appointment in customer_appointments %}
+                                    <div class="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-3 mb-2">
+                                                <span class="px-2 py-1 text-xs font-medium rounded-full
+                                                    {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-700
+                                                    {% elif appointment.status == 'confirmed' %}bg-green-100 text-green-700
+                                                    {% elif appointment.status == 'completed' %}bg-blue-100 text-blue-700
+                                                    {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-700
+                                                    {% endif %}">
+                                                    {{ appointment.get_status_display }}
+                                                </span>
+                                                <span class="text-sm text-gray-600">
+                                                    {{ appointment.date|date:"M d, Y" }} at {{ appointment.time|date:"g:i A" }}
+                                                </span>
+                                            </div>
+                                            <h3 class="font-medium text-gray-800">{{ appointment.service.name }}</h3>
+                                            <p class="text-sm text-gray-600 mt-1">
+                                                <span class="font-medium">Dog:</span> {{ appointment.dog_name }}
+                                                {% if appointment.dog_breed %}({{ appointment.dog_breed.name }}){% endif %}
+                                            </p>
+                                            {% if appointment.groomer %}
+                                            <p class="text-sm text-gray-600 mt-1">
+                                                <span class="font-medium">Groomer:</span> {{ appointment.groomer.name }}
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-right flex flex-col items-end space-y-2">
+                                            {% if appointment.price_at_booking %}
+                                                <p class="text-lg font-semibold text-teal-600">${{ appointment.price_at_booking }}</p>
+                                            {% endif %}
+                                            {% if appointment.status == 'pending' %}
+                                                <button
+                                                    data-modal-url="{% url 'cancel_appointment_confirm_modal' appointment.id %}"
+                                                    data-modal-name="cancel_appointment_confirm_modal"
+                                                    class="px-3 py-1.5 text-red-600 text-sm font-medium rounded-lg hover:bg-red-200 transition"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-12">
+                                <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p class="text-gray-500 mb-4">You haven't made any bookings yet</p>
+                                <a href="/" class="inline-block px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium">
+                                    Book an Appointment
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

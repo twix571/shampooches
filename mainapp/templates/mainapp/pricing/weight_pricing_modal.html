@@ -1,0 +1,122 @@
+<div class="p-8" id="weight-pricing-modal">
+    <div class="flex justify-end mb-4">
+        <button onclick="closeModal();" class="px-3 py-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <form id="weight-pricing-form" class="space-y-5">
+        {% csrf_token %}
+        <input type="hidden" name="breed_id" value="{{ breed.id }}">
+
+        <!-- Settings -->
+        <div class="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-6">
+            <h3 class="font-semibold text-slate-800 mb-5 text-lg">Weight Pricing Configuration</h3>
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Weight Increment (lbs)</label>
+                    <div class="flex items-center gap-1">
+                        <input type="number" name="weight_range_amount" step="1" min="1"
+                            class="px-3 py-2 border-2 border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white font-medium text-slate-800 transition"
+                            placeholder="10"
+                            style="width: 85px;">
+                        <span class="text-slate-500 text-sm">lbs</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Increment Charge ($)</label>
+                    <div class="flex items-center gap-1">
+                        <input type="number" name="weight_price_amount" step="1" min="0"
+                            class="px-3 py-2 border-2 border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white font-medium text-slate-800 transition"
+                            placeholder="15"
+                            style="width: 85px;">
+                        <span class="text-slate-500 text-sm">$</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Base Weight (lbs)</label>
+                    <div class="flex items-center gap-1">
+                        <input type="number" name="start_weight" step="1" min="0"
+                            class="px-3 py-2 border-2 border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white font-medium text-slate-800 transition"
+                            placeholder="15"
+                            style="width: 85px;">
+                        <span class="text-slate-500 text-sm">lbs</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculator -->
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="font-semibold text-slate-800 mb-5 text-lg">Preview Calculator</h3>
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Test Dog Weight (lbs)</label>
+                    <div class="flex items-center gap-1">
+                        <input type="number" step="1" min="0" placeholder="Enter weight"
+                            class="px-3 py-2 border-2 border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white text-slate-800 font-medium transition"
+                            style="width: 85px;">
+                        <span class="text-slate-500 text-sm">lbs</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Calculated Surcharge</label>
+                    <div class="flex items-center gap-1">
+                        <input type="text" readonly
+                            class="px-3 py-2 border-2 border-slate-200 rounded bg-gradient-to-r from-emerald-50 to-teal-50 text-teal-700 font-semibold text-lg"
+                            placeholder="$"
+                            style="width: 85px;">
+                        <span class="text-teal-600 text-sm">$</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="flex items-center gap-6 mt-8 pt-6">
+        <div class="flex-1 bg-slate-50 rounded-lg px-5 py-4">
+            <p class="text-sm text-slate-600 leading-relaxed">
+                For every <strong id="weight_range_amount_display" class="text-teal-600">10</strong> lbs above <strong id="start_weight_display" class="text-teal-600">15</strong> lbs, add <strong id="weight_price_amount_display" class="text-teal-600">$15</strong>.
+            </p>
+        </div>
+        <div class="flex gap-3 flex-shrink-0">
+            <button onclick="handleWeightPricingBack();" class="px-5 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-100 transition text-sm">Back</button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/weight-pricing-modal.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    setTimeout(function() {
+        if (window.weightPricingModalApp) {
+            const app = window.weightPricingModalApp(
+                {{ breed.id }},
+                '{{ breed.name|escapejs }}',
+                '{{ breed.weight_range_amount|default:""|escapejs }}',
+                '{{ breed.weight_price_amount|default:""|escapejs }}',
+                '{{ breed.start_weight|default:""|escapejs }}'
+            );
+
+            // Make handleBack available globally
+            window.handleWeightPricingBack = app.handleBack;
+        }
+    }, 100);
+});
+
+function getCsrfToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (token) return token.value;
+    if (window.parent && window.parent !== window) {
+        const parentToken = window.parent.document.querySelector('[name=csrfmiddlewaretoken]');
+        if (parentToken) return parentToken.value;
+    }
+    const cookieValue = `; ${document.cookie}`;
+    const parts = cookieValue.split(`; csrftoken=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+}
+</script>

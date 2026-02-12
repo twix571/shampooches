@@ -1,0 +1,16 @@
+{% if slots|length == 0 %}
+<p class="text-gray-400 text-sm">No existing time slots for this day</p>
+{% else %}
+    {% for slot in slots %}
+    <div class="flex items-center justify-between bg-gray-50 rounded-md px-3 py-2 border border-gray-200">
+        <div class="flex items-center gap-2">
+            {% if show_groomer %}
+            <span class="text-xs font-semibold text-teal-600">{{ slot.groomer_name }}</span>
+            <span class="text-gray-300">|</span>
+            {% endif %}
+            <span class="text-sm text-gray-700">{{ slot.start_display }} - {{ slot.end_display }}</span>
+        </div>
+        <button data-action="delete-slot" data-slot-id="{{ slot.id }}" class="text-red-500 hover:text-red-700 text-xs">Delete</button>
+    </div>
+    {% endfor %}
+{% endif %}

@@ -1,0 +1,95 @@
+{% load static %}
+{% load core_tags %}
+<div class="p-8 relative schedule-modal-container" data-context-date="{{ date|default:"" }}" data-context-day-name="{{ day_name|default:"" }}">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold text-gray-800">Edit Time Slots</h2>
+        <button onclick="closeModal()" class="px-3 py-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Date Display -->
+    <div class="mb-6 bg-teal-50 border border-teal-200 rounded-lg p-4">
+        <h3 class="font-medium text-teal-800">
+            Editing availability for <span id="formatted-date">Loading...</span>
+        </h3>
+    </div>
+
+    <!-- Hidden date input for HTMX -->
+    <input type="hidden" name="date" value="{{ date|default:'' }}">
+
+    <!-- Groomer Selection -->
+    <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Select Groomer</label>
+        <select
+            id="groomer-select"
+            name="groomer_id"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            hx-get="/htmx/groomer-options/"
+            hx-target="#groomer-select"
+            hx-swap="innerHTML"
+            hx-trigger="load"
+        >
+            <option value="">Loading groomers...</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Select "All Groomers" to set the same availability for everyone</p>
+    </div>
+
+    <!-- Existing Time Slots -->
+    <div class="mb-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-2">Existing Time Slots</h4>
+        <div
+            id="existing-slots"
+            class="space-y-2 max-h-48 overflow-y-auto"
+            hx-get="/htmx/time-slots/"
+            hx-trigger="load, change from:#groomer-select"
+            hx-include="[name='groomer_id'], [name='date']"
+        >
+            <p class="text-gray-400 text-sm">Loading time slots...</p>
+        </div>
+    </div>
+
+    <!-- Add New Time Slot -->
+    <div class="mb-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-2">Add New Time Slot</h4>
+        <div class="flex gap-2 items-end">
+            <div class="flex-1">
+                <label class="block text-xs text-gray-600 mb-1">Start Time</label>
+                <input type="time" name="new_start_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+            </div>
+            <div class="flex-1">
+                <label class="block text-xs text-gray-600 mb-1">End Time</label>
+                <input type="time" name="new_end_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+            </div>
+            <button data-action="add-time-slot" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition">
+                Add
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Add Common Times -->
+    <div class="mb-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-2">Quick Add</h4>
+        <div class="flex flex-wrap gap-2" data-quick-add-container>
+            <button data-quick-add="09:00" data-quick-add-end="10:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">9 AM</button>
+            <button data-quick-add="10:00" data-quick-add-end="11:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">10 AM</button>
+            <button data-quick-add="11:00" data-quick-add-end="12:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">11 AM</button>
+            <button data-quick-add="12:00" data-quick-add-end="13:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">12 PM</button>
+            <button data-quick-add="13:00" data-quick-add-end="14:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">1 PM</button>
+            <button data-quick-add="14:00" data-quick-add-end="15:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">2 PM</button>
+            <button data-quick-add="15:00" data-quick-add-end="16:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">3 PM</button>
+            <button data-quick-add="16:00" data-quick-add-end="17:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">4 PM</button>
+            <button data-quick-add="17:00" data-quick-add-end="18:00" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">5 PM</button>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-2 border-t border-gray-200 pt-6">
+        <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+        <button data-action="save-time-slots" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600">Save Changes</button>
+    </div>
+</div>
+
+<script src="{% static 'js/schedule-modal.js' %}"></script>

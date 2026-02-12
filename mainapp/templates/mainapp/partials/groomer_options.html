@@ -1,0 +1,8 @@
+{% if not groomers %}
+<option value="" disabled>No active groomers available</option>
+{% else %}
+<option value="" style="color: #14b8a6; font-weight: 600;">All Groomers</option>
+{% for groomer in groomers %}
+<option value="{{ groomer.id }}">{{ groomer.name }}</option>
+{% endfor %}
+{% endif %}

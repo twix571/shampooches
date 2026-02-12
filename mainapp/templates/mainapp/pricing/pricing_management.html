@@ -1,0 +1,697 @@
+{% extends "mainapp/base.html" %}
+{% load static %}
+{% block title %}Pricing Management - Shampooches{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-teal-50/50 via-white to-cyan-50/30">
+    <!-- Header -->
+    <header class="bg-white/70 border-b border-teal-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 rounded-xl shadow-sm flex items-center justify-center bg-teal-500">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-lg font-semibold text-slate-800">Shampooches</span>
+                        <span class="text-xs text-teal-600 -mt-1">Pricing Management</span>
+                    </div>
+                </div>
+                <nav class="flex items-center space-x-6">
+                    <a href="{% url 'admin_landing' %}" class="text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors hover:bg-teal-50 px-3 py-2 rounded-lg">Dashboard</a>
+                    <a href="{% url 'custom_logout' %}" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition shadow-sm text-sm font-medium">Logout</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Info Bar -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-semibold text-slate-800 mb-2">Manage Pricing</h2>
+                    <p class="text-sm text-slate-500">
+                        Edit breed names, base prices, and weight-based pricing. 
+                        <span class="text-green-600">{{ breeds|length }} active breeds</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Grid -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100">
+            <div class="px-8 py-5 border-b border-slate-100">
+                <h2 class="text-xl font-semibold text-slate-800">Breed Pricing</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Breed Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Base Price ($)</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Weight Pricing</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        {% for breed in breeds %}
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium text-slate-900">{{ breed.name }}</span>
+                            </td>
+                            <td class="px-6 py-4 cursor-pointer hover:bg-teal-50 transition-colors rounded" onclick="openBasePriceEditor(event, {{ breed.id }}, {{ breed.base_price|default:'null' }})">
+                                {% if breed.base_price %}
+                                    <span class="text-sm text-slate-700 font-semibold">${{ breed.base_price }}</span>
+                                {% else %}
+                                    <span class="text-sm text-slate-400">Not set</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 cursor-pointer hover:bg-teal-50 transition-colors rounded" onclick="openWeightPricingModal({{ breed.id }})" oncontextmenu="handleWeightCellContext(event, {{ breed.id }}, {{ breed.weight_range_amount|default:'null' }}, {{ breed.weight_price_amount|default:'null' }}, {{ breed.start_weight|default:'null' }})">
+                                {% if breed.weight_range_amount and breed.weight_price_amount and breed.start_weight %}
+                                    <div class="text-xs" id="weight-cell-{{ breed.id }}" data-breed-id="{{ breed.id }}" data-range="{{ breed.weight_range_amount }}" data-price="{{ breed.weight_price_amount }}" data-start="{{ breed.start_weight }}">
+                                        <span class="block text-slate-700 font-medium">{{ breed.weight_range_amount|floatformat:0 }} lbs = +${{ breed.weight_price_amount|floatformat:0 }}</span>
+                                        <span class="block text-slate-500">Starts at {{ breed.start_weight|floatformat:0 }} lbs</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-sm text-slate-400">Not set</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-12 text-center">
+                                <div class="text-slate-500">
+                                    <svg class="w-12 h-12 mx-auto mb-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <p>No breeds found. Add some breeds to manage pricing.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add New Breed -->
+        <div class="mt-8 bg-white rounded-2xl shadow-sm border border-slate-100">
+            <div class="px-8 py-5 border-b border-slate-100">
+                <h2 class="text-xl font-semibold text-slate-800">Add New Breed</h2>
+            </div>
+            <div class="p-8">
+                <form id="add-breed-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Breed Name</label>
+                            <input type="text" name="name" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="e.g., Golden Retriever">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Base Price ($)</label>
+                            <input type="number" name="base_price" step="0.01" min="0" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="e.g., 60">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Weight Range (lbs)</label>
+                            <input type="number" name="weight_range_amount" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="e.g., 10">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Price per Range ($)</label>
+                            <input type="number" name="weight_price_amount" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="e.g., 15">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Start Weight (lbs)</label>
+                            <input type="number" name="start_weight" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="e.g., 15">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition shadow-sm font-medium">
+                                Add Breed
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Edit Modal -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+        <div class="px-8 py-6 border-b border-slate-200">
+            <h3 class="text-xl font-semibold text-slate-800">Edit Breed Pricing</h3>
+        </div>
+        <div class="p-8">
+            <form id="edit-breed-form" class="space-y-4">
+                <input type="hidden" name="breed_id" id="edit-breed-id">
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Base Price ($)</label>
+                    <input type="number" name="base_price" step="0.01" min="0" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" id="edit-base-price">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Weight Range (lbs)</label>
+                    <input type="number" name="weight_range_amount" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" id="edit-weight-range">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Price per Range ($)</label>
+                    <input type="number" name="weight_price_amount" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" id="edit-price-per-range">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Start Weight (lbs)</label>
+                    <input type="number" name="start_weight" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" id="edit-start-weight">
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition shadow-sm font-medium">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Context Menu -->
+<div id="context-menu" class="hidden fixed z-50 bg-white rounded-lg shadow-lg border border-slate-200 py-1 min-w-40">
+    <button id="copy-btn" class="hidden w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-teal-50 transition-colors cursor-pointer" onclick="copyWeightPricing()">
+        <span class="flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <span>Copy Weight Pricing</span>
+        </span>
+    </button>
+    <button id="paste-btn" class="hidden w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-teal-50 transition-colors cursor-pointer" onclick="pasteWeightPricing()">
+        <span class="flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <span>Paste Weight Pricing</span>
+        </span>
+    </button>
+</div>
+
+<script>
+// Global variable for context menu target
+let contextMenuBreedId = null;
+let contextMenuCellElement = null;
+
+// CSRF token helper
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+           document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+}
+
+// Check if secure clipboard API is available
+function isSecureClipboardAvailable() {
+    return window.isSecureContext && navigator.clipboard;
+}
+
+// Fallback clipboard copy using execCommand (for non-HTTPS or older browsers)
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    let successful = false;
+    try {
+        successful = document.execCommand('copy');
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+    }
+
+    document.body.removeChild(textArea);
+    return successful;
+}
+
+// Universal clipboard copy with fallback
+function copyToClipboard(text) {
+    if (isSecureClipboardAvailable()) {
+        return navigator.clipboard.writeText(text);
+    } else {
+        return new Promise((resolve, reject) => {
+            const result = fallbackCopyToClipboard(text);
+            if (result) {
+                resolve();
+            } else {
+                reject(new Error('Fallback copy failed'));
+            }
+        });
+    }
+}
+
+// Clipboard read with fallback (for paste checking)
+async function readClipboardText() {
+    if (isSecureClipboardAvailable()) {
+        return await navigator.clipboard.readText();
+    } else {
+        return null; // Cannot reliably read clipboard without HTTPS
+    }
+}
+
+// Update URL hash when modal opens
+function updateModalHash(hashValue) {
+    history.pushState(null, '', hashValue);
+}
+
+// Clear URL hash when modal closes
+function clearModalHash() {
+    if (window.location.hash) {
+        history.pushState(null, '', window.location.pathname);
+    }
+}
+
+// Open edit modal
+function openEditModal(breedId) {
+    console.log('breed pricing modal opened');
+    // Fetch breed data from API
+    fetch(`/api/v1/breeds/${breedId}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('edit-breed-id').value = data.id;
+            document.getElementById('edit-base-price').value = data.base_price || '';
+            document.getElementById('edit-weight-range').value = data.weight_range_amount || '';
+            document.getElementById('edit-price-per-range').value = data.weight_price_amount || '';
+            document.getElementById('edit-start-weight').value = data.start_weight || '';
+            document.getElementById('edit-modal').classList.remove('hidden');
+            updateModalHash('#edit-breed-pricing-modal');
+        })
+        .catch(error => {
+            console.error('Error fetching breed data:', error);
+            alert('Failed to load breed data');
+        });
+}
+
+// Close edit modal
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+    clearModalHash();
+}
+
+// Open inline base price editor
+function openBasePriceEditor(event, breedId, currentPrice) {
+    const cell = event.currentTarget;
+    const currentValue = currentPrice !== null ? currentPrice : '';
+    
+    // Replace cell content with input field
+    cell.innerHTML = `
+        <input type="number" 
+               step="0.01" 
+               min="0" 
+               value="${currentValue}" 
+               class="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+               onblur="saveBasePrice(${breedId}, this.value)"
+               onkeypress="this.blur(); if(event.key === 'Enter') { event.preventDefault(); }"
+               onclick="event.stopPropagation();">
+    `;
+    
+    // Focus on the input field
+    const input = cell.querySelector('input');
+    input.focus();
+    input.select();
+}
+
+// Save base price inline
+async function saveBasePrice(breedId, value) {
+    try {
+        const response = await fetch(`/api/v1/breeds/${breedId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                base_price: value || null
+            })
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Failed to update base price: ' + (error.detail || 'Unknown error'));
+            location.reload(); // Reload to reset cell
+        }
+    } catch (error) {
+        console.error('Error updating base price:', error);
+        alert('Failed to update base price');
+        location.reload();
+    }
+}
+
+// Open weight pricing modal
+function openWeightPricingModal(breedId) {
+    openEditModal(breedId);
+}
+
+// Add new breed
+document.getElementById('add-breed-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch('/api/v1/breeds/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                name: formData.get('name'),
+                base_price: formData.get('base_price'),
+                weight_range_amount: formData.get('weight_range_amount'),
+                weight_price_amount: formData.get('weight_price_amount'),
+                start_weight: formData.get('start_weight')
+            })
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Failed to add breed: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error adding breed:', error);
+        alert('Failed to add breed');
+    }
+});
+
+// Edit breed
+document.getElementById('edit-breed-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const breedId = formData.get('breed_id');
+    
+    try {
+        const response = await fetch(`/api/v1/breeds/${breedId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                base_price: formData.get('base_price'),
+                weight_range_amount: formData.get('weight_range_amount'),
+                weight_price_amount: formData.get('weight_price_amount'),
+                start_weight: formData.get('start_weight')
+            })
+        });
+        
+        if (response.ok) {
+            closeEditModal();
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Failed to update breed: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error updating breed:', error);
+        alert('Failed to update breed');
+    }
+});
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeEditModal();
+        hideContextMenu();
+    }
+});
+
+// Hide context menu when clicking elsewhere
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('context-menu').contains(e.target)) {
+        hideContextMenu();
+    }
+});
+
+// Handle right-click on weight pricing cell
+function handleWeightCellContext(event, breedId, weightRangeAmount, weightPriceAmount, startWeight) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    contextMenuBreedId = breedId;
+    contextMenuCellElement = event.currentTarget;
+
+    const contextMenu = document.getElementById('context-menu');
+    const copyBtn = document.getElementById('copy-btn');
+    const pasteBtn = document.getElementById('paste-btn');
+
+    contextMenu.style.left = event.clientX + 'px';
+    contextMenu.style.top = event.clientY + 'px';
+
+    const hasData = weightRangeAmount !== null && weightPriceAmount !== null && startWeight !== null;
+    copyBtn.classList.toggle('hidden', !hasData);
+
+    checkClipboardAndTogglePaste();
+
+    contextMenu.classList.remove('hidden');
+}
+
+// Hide context menu
+function hideContextMenu() {
+    document.getElementById('context-menu').classList.add('hidden');
+    contextMenuBreedId = null;
+    contextMenuCellElement = null;
+}
+
+// Copy weight pricing to clipboard
+function copyWeightPricing() {
+    if (!contextMenuBreedId) {
+        return;
+    }
+
+    const cell = document.getElementById(`weight-cell-${contextMenuBreedId}`);
+    if (!cell) {
+        hideContextMenu();
+        return;
+    }
+
+    const data = {
+        weight_range_amount: cell.dataset.range,
+        weight_price_amount: cell.dataset.price,
+        start_weight: cell.dataset.start
+    };
+
+    const copyText = `weight_range_amount:${data.weight_range_amount}|weight_price_amount:${data.weight_price_amount}|start_weight:${data.start_weight}`;
+
+    copyToClipboard(copyText).then(() => {
+        console.log('Weight pricing copied to clipboard');
+        hideContextMenu();
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        const errorMessage = isSecureClipboardAvailable()
+            ? 'Failed to copy weight pricing. Please try again.'
+            : 'Copy/paste requires HTTPS connection or a newer browser. Please try again.';
+        alert(errorMessage);
+        hideContextMenu();
+    });
+}
+
+// Check clipboard and toggle paste button visibility
+async function checkClipboardAndTogglePaste() {
+    const pasteBtn = document.getElementById('paste-btn');
+
+    // If clipboard API is not available (no HTTPS or old browser), always show paste
+    if (!isSecureClipboardAvailable()) {
+        pasteBtn.classList.remove('hidden');
+        return;
+    }
+
+    try {
+        const clipboardText = await readClipboardText();
+        if (clipboardText) {
+            const isValid = parseWeightPricingClipboard(clipboardText);
+            pasteBtn.classList.toggle('hidden', !isValid);
+        } else {
+            pasteBtn.classList.add('hidden');
+        }
+    } catch (err) {
+        console.warn('Could not read clipboard:', err);
+        // Don't show error, just hide paste button for now
+        pasteBtn.classList.add('hidden');
+    }
+}
+
+// Parse weight pricing from clipboard text
+function parseWeightPricingClipboard(text) {
+    const expectedPattern = /^weight_range_amount:[\d.]+\|weight_price_amount:[\d.]+\|start_weight:[\d.]+$/;
+    return expectedPattern.test(text);
+}
+
+// Get weight pricing data from clipboard
+function getWeightPricingFromClipboard(text) {
+    const data = {};
+    text.split('|').forEach(part => {
+        const [key, value] = part.split(':');
+        console.log(`Parsing: key=${key}, value=${value}`);
+        data[key] = parseFloat(value);
+    });
+    console.log('Final parsed data:', data);
+    return data;
+}
+
+// Paste weight pricing from clipboard and apply to breed
+async function pasteWeightPricing() {
+    if (!contextMenuBreedId) {
+        console.error('No breed ID context');
+        hideContextMenu();
+        return;
+    }
+
+    const cell = document.getElementById(`weight-cell-${contextMenuBreedId}`);
+    const hasExistingData = cell && cell.dataset.range !== '';
+
+    // Check if there's existing data to potentially overwrite
+    if (hasExistingData) {
+        const existingRange = cell.dataset.range;
+        const existingPrice = cell.dataset.price;
+        const existingStart = cell.dataset.start;
+
+        const confirmMsg = `This will overwrite existing pricing data:\n` +
+                          `Current: ${parseFloat(existingRange).toFixed(0)} lbs = +$${parseFloat(existingPrice).toFixed(0)} (starts at ${parseFloat(existingStart).toFixed(0)} lbs)\n\n` +
+                          `Are you sure you want to continue?`;
+
+        if (!confirm(confirmMsg)) {
+            hideContextMenu();
+            return;
+        }
+    }
+
+    try {
+        let clipboardText;
+        if (isSecureClipboardAvailable()) {
+            clipboardText = await navigator.clipboard.readText();
+        } else {
+            clipboardText = await readClipboardText();
+            if (clipboardText === null) {
+                alert('Paste requires HTTPS connection or a newer browser.\n\nPlease use HTTPS to enable copy/paste functionality.');
+                hideContextMenu();
+                return;
+            }
+        }
+
+        if (!clipboardText) {
+            alert('Clipboard is empty or could not be read.\n\nPlease copy weight pricing first.');
+            hideContextMenu();
+            return;
+        }
+
+        console.log('Clipboard text:', clipboardText);
+
+        const weightData = getWeightPricingFromClipboard(clipboardText);
+        console.log('Parsed weight data:', weightData);
+
+        if (!weightData.weight_range_amount || !weightData.weight_price_amount || !weightData.start_weight) {
+            console.error('Invalid weight data:', weightData);
+            alert('Invalid weight pricing data in clipboard.\n\nPlease make sure you copied from a weight pricing cell.');
+            hideContextMenu();
+            return;
+        }
+
+        const payload = {
+            weight_range_amount: weightData.weight_range_amount,
+            weight_price_amount: weightData.weight_price_amount,
+            start_weight: weightData.start_weight
+        };
+        console.log('Sending payload:', payload);
+
+        const response = await fetch(`/api/v1/breeds/${contextMenuBreedId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(payload)
+        });
+
+        console.log('Response status:', response.status);
+
+        if (response.ok) {
+            console.log('Paste successful');
+
+            const responseData = await response.json();
+            console.log('Response data:', responseData);
+
+            // Use the payload values since API response doesn't include them
+            console.log('Calling updateWeightCell with:', contextMenuBreedId, weightData.weight_range_amount, weightData.weight_price_amount, weightData.start_weight);
+
+            // Update the cell content inline
+            updateWeightCell(contextMenuBreedId, weightData.weight_range_amount, weightData.weight_price_amount, weightData.start_weight);
+
+            hideContextMenu();
+        } else {
+            const error = await response.json();
+            console.error('Paste failed with error:', error);
+            let errorMsg = 'Failed to paste weight pricing';
+            if (error.detail) {
+                errorMsg += ': ' + error.detail;
+            }
+            alert(errorMsg);
+            hideContextMenu();
+        }
+    } catch (error) {
+        console.error('Error pasting weight pricing:', error);
+        let errorMsg = 'Failed to paste weight pricing';
+        if (error.message) {
+            errorMsg += ': ' + error.message;
+        }
+        if (!isSecureClipboardAvailable() && error.name === 'NotAllowedError') {
+            errorMsg = 'Paste requires HTTPS connection or a newer browser.';
+        }
+        alert(errorMsg);
+        hideContextMenu();
+    }
+}
+
+// Update weight cell content inline
+function updateWeightCell(breedId, weightRangeAmount, weightPriceAmount, startWeight) {
+    console.log('updateWeightCell called with:', {breedId, weightRangeAmount, weightPriceAmount, startWeight});
+    console.log('contextMenuCellElement:', contextMenuCellElement);
+    
+    if (!contextMenuCellElement) {
+        console.error('contextMenuCellElement is null!');
+        return;
+    }
+    
+    const rangeDisplay = parseFloat(weightRangeAmount).toFixed(0);
+    const priceDisplay = parseFloat(weightPriceAmount).toFixed(0);
+    const startDisplay = parseFloat(startWeight).toFixed(0);
+    
+    console.log('Formatted values:', {rangeDisplay, priceDisplay, startDisplay});
+    
+    const newContent = `
+        <div class="text-xs" id="weight-cell-${breedId}" data-breed-id="${breedId}" data-range="${weightRangeAmount}" data-price="${weightPriceAmount}" data-start="${startWeight}">
+            <span class="block text-slate-700 font-medium">${rangeDisplay} lbs = +$${priceDisplay}</span>
+            <span class="block text-slate-500">Starts at ${startDisplay} lbs</span>
+        </div>
+    `;
+    
+    console.log('New content:', newContent);
+    
+    try {
+        contextMenuCellElement.innerHTML = newContent;
+        console.log('Cell content updated successfully');
+    } catch (e) {
+        console.error('Error updating cell:', e);
+    }
+}
+</script>
+{% endblock %}

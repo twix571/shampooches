@@ -1,0 +1,109 @@
+<div class="p-8">
+    {% include "mainapp/partials/modal_header.html" with title="Site Configuration" %}
+
+    <div class="mb-6">
+        <p class="text-sm text-gray-600 mb-2">
+            Manage business information, contact details, and hours. Changes appear immediately across the customer landing page, booking flow, and contact displays.
+        </p>
+        <a href="{% url 'admin:mainapp_siteconfig_changelist' %}" target="_blank" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
+           style="background: linear-gradient(to right, #0ea5e9, #0284c7); color: white;">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Edit Configuration (Admin Panel)
+        </a>
+    </div>
+
+    {% if site_config %}
+        <div class="space-y-6">
+            <!-- Business Information -->
+            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-sky-50 to-cyan-50">
+                <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    Business Information
+                </h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-start">
+                        <span class="text-gray-500 w-24 flex-shrink-0">Name:</span>
+                        <span class="text-gray-800 font-medium">{{ site_config.business_name }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-gray-500 w-24 flex-shrink-0">Email:</span>
+                        <span class="text-gray-800">{{ site_config.email }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-gray-500 w-24 flex-shrink-0">Phone:</span>
+                        <span class="text-gray-800">{{ site_config.phone }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-gray-500 w-24 flex-shrink-0">Address:</span>
+                        <span class="text-gray-800">{{ site_config.address|linebreaks }}</span>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-sky-100">
+                    <span class="inline-block px-2 py-1 {% if site_config.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %} text-xs rounded-full font-medium">
+                        {% if site_config.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Business Hours -->
+            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-teal-50 to-emerald-50">
+                <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Business Hours
+                </h3>
+                <div class="space-y-2 text-sm">
+                    {% for hour_line in site_config.get_hours_display %}
+                    <div class="flex items-start {% if 'Closed' in hour_line %}text-gray-500{% endif %}">
+                        <svg class="w-4 h-4 mr-2 mt-0.5 {% if 'Closed' in hour_line %}text-gray-400{% else %}text-teal-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {% if 'Closed' not in hour_line %}
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            {% else %}
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            {% endif %}
+                        </svg>
+                        <span class="text-gray-700">{{ hour_line }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Quick Tips:
+            </h4>
+            <ul class="text-xs text-gray-600 space-y-1">
+                <li>• Business hours appear in the footer of the customer landing page</li>
+                <li>• Contact info is shown throughout the site and in booking confirmations</li>
+                <li>• Only one configuration can be marked as active at a time</li>
+                <li>• Hours are defined in integer format (e.g., 8 = 8:00 AM, 0 = Closed)</li>
+            </ul>
+        </div>
+    {% else %}
+        {% url 'admin:mainapp_siteconfig_add' as admin_add_url %}
+        <div class="text-center py-8">
+            <div class="inline-block p-4 rounded-full bg-gray-100 mb-4">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">No Configuration Found</h3>
+            <p class="text-sm text-gray-600 mb-4">A site configuration is required to display business hours and contact info.</p>
+            <a href="{{ admin_add_url }}" target="_blank" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md bg-sky-500 text-white hover:bg-sky-600">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Create Configuration
+            </a>
+        </div>
+    {% endif %}
+</div>

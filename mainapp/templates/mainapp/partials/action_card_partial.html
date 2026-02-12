@@ -1,0 +1,18 @@
+{% if card.page_url %}
+<a href="{% url card.page_url %}" class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 hover:shadow-lg hover:border-slate-200 transition-all duration-300 group text-left flex flex-col justify-between min-h-[160px] cursor-pointer block text-decoration-none">
+{% else %}
+<button data-modal-url="{% url card.modal_url %}" class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 hover:shadow-lg hover:border-slate-200 transition-all duration-300 group text-left flex flex-col justify-between min-h-[160px] cursor-pointer">
+{% endif %}
+    <div class="px-1">
+        <div class="w-14 h-14 {{ card.bg_color }} rounded-xl flex items-center justify-center mb-5 mt-1 group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-7 h-7 {{ card.text_color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {{ card.svg_icon|safe }}
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold mb-2 text-teal-500">{{ card.title }}</h3>
+    </div>
+{% if card.page_url %}
+</a>
+{% else %}
+</button>
+{% endif %}

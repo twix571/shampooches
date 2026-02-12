@@ -1,0 +1,967 @@
+{% load core_tags %}
+<style>
+/* Custom modal styling */
+#confirm-modal #confirm-modal-message,
+#notification-modal #notification-modal-message {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+</style>
+<div class="p-8 relative">
+    {% include "mainapp/partials/modal_header.html" with title="Appointments" %}
+
+    <!-- Week Navigation -->
+    <div class="flex justify-between items-center mb-8 gap-4">
+        <button data-action="change-week" data-offset="-1" class="flex items-center px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition hover:shadow-sm">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span class="ml-2 text-gray-600 font-medium">Previous</span>
+        </button>
+        <span class="text-lg font-medium text-gray-800">
+            Week of {{ calendar_data.0.date|date:"M j" }} - {{ calendar_data.4.date|date:"M j, Y" }}
+        </span>
+        <button data-action="change-week" data-offset="1" class="flex items-center px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition hover:shadow-sm">
+            <span class="mr-2 text-gray-600 font-medium">Next</span>
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- All Days in One Container -->
+    <div class="rounded-lg overflow-hidden border border-gray-200 mb-8 shadow-sm">
+        <div class="grid grid-cols-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+            {% for day in calendar_data %}
+                <div class="px-3 py-2 {% if day.is_today %}bg-blue-100{% endif %} transition-colors">
+                    <div class="font-semibold text-gray-800 text-sm">{{ day.day_name }}</div>
+                    <div class="text-xs text-gray-600">{{ day.date|date:"M j" }}</div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="grid grid-cols-5 divide-x divide-gray-200">
+            {% for day in calendar_data %}
+                <div class="p-2 min-h-40 max-h-64 overflow-y-auto day-cell"
+                     data-date="{{ day.date|date:'Y-m-d' }}"
+                     data-day-name="{{ day.day_name }}">
+                    {% if day.appointments %}
+                        <div class="space-y-2">
+                            {% for appointment in day.appointments|dictsort:"time" %}
+                                <div class="bg-gray-50 rounded-md p-2 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 transition-all duration-200 group">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-sm font-semibold text-gray-700" style="min-width: 50px;">
+                                            {% if appointment.time %}
+                                                {% if appointment.time.hour == 0 and appointment.time.minute == 0 %}
+                                                    <span class="text-red-500" title="Invalid midnight time">00:00</span>
+                                                {% else %}
+                                                    {{ appointment.time|date:"H:i" }}
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-red-500" title="Missing time">TBA</span>
+                                            {% endif %}
+                                        </span>
+                                        {% status_badge appointment.status %}
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-800 truncate">{{ appointment.customer.name }}</div>
+                                    <div class="text-xs text-gray-600 truncate">{{ appointment.dog_name }}</div>
+                                    <div class="text-xs text-gray-500 mt-1 truncate">{{ appointment.service.name }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-400 text-xs text-center py-4">No appointments</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Click Context Menu -->
+    <div id="context-menu" class="hidden fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-48" style="z-index: 9998;">
+        <button data-action="open-time-slot-editor" class="w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-2" style="transition: background-color 0.2s;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Edit Time Slots
+        </button>
+
+        <div id="copy-options-container" class="hidden border-t border-gray-200 mt-1 pt-1">
+                <button data-action="copy-all-groomers" class="w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-2" style="transition: background-color 0.2s;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    Copy ALL Groomers
+                </button>
+
+                <div class="relative groomer-menu-trigger">
+                    <button data-action="copy-specific-groomer" class="w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center justify-between gap-2" style="transition: background-color 0.2s;">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copy Specific Groomer
+                        </span>
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <button data-action="paste-copied-slots" class="w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-2" style="transition: background-color 0.2s;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    Paste Copied Time Slots
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Time Slots This Week -->
+    <div class="border-t border-gray-200 pt-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">Available Time Slots This Week</h3>
+        <div id="available-slots-container">
+            <p class="text-gray-400 text-sm">Loading available time slots...</p>
+        </div>
+    </div>
+
+    <!-- Groomer Submenu (outside context menu) -->
+    <div id="groomer-submenu" class="hidden fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-48 pointer-events-none" style="z-index: 9999;">
+        <div class="px-4 py-2 text-xs font-semibold text-gray-500 border-b border-gray-100">
+            Select Groomer
+        </div>
+        <!-- Groomer options will be dynamically added here -->
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div class="px-8 py-6 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-800">Confirm Action</h3>
+            </div>
+            <div class="p-8">
+                <p id="confirm-modal-message" class="text-gray-700 mb-6"></p>
+                <div class="flex justify-end space-x-3">
+                    <button id="confirm-modal-cancel" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                        Cancel
+                    </button>
+                    <button id="confirm-modal-confirm" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition shadow-sm font-medium">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Notification Modal -->
+    <div id="notification-modal" class="hidden fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div class="px-8 py-6 border-b border-gray-200">
+                <h3 id="notification-modal-title" class="text-xl font-semibold text-gray-800"></h3>
+            </div>
+            <div class="p-8">
+                <p id="notification-modal-message" class="text-gray-700 mb-6"></p>
+                <div class="flex justify-end">
+                    <button id="notification-modal-close" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // Store context for time slot editor
+    window.contextMenuDate = null;
+    window.contextMenuDayName = null;
+    window.weekOffset = {{ week_offset }};
+
+    // Clipboarding storage
+    window.copiedTimeSlots = null;
+
+    // Groomer cache to avoid repeated API calls
+    window.groomersCache = null;
+    window.groomersCacheTimestamp = null;
+    if (typeof window.GROOMERS_CACHE_DURATION === 'undefined') {
+        window.GROOMERS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    }
+
+    // Hover timeout for submenu (window-level to prevent redeclaration issues)
+    if (typeof window.submenuHoverTimeout === 'undefined') {
+        window.submenuHoverTimeout = null;
+    }
+    if (typeof window.submenuElement === 'undefined') {
+        window.submenuElement = null;
+    }
+
+    // Utility function to add delay between requests (prevents rate limiting)
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Fetch with retry logic for rate limiting
+    async function fetchWithRetry(url, options = {}, retries = 3, retryDelay = 2000) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 429) {
+                    console.log(`Rate limited, waiting ${retryDelay}ms before retry ${i + 1}/${retries}`);
+                    await delay(retryDelay);
+                    retryDelay *= 2; // Exponential backoff
+                    continue;
+                }
+                return response;
+            } catch (error) {
+                if (i === retries - 1) throw error;
+                console.log(`Fetch failed, retry ${i + 1}/${retries}:`, error);
+                await delay(retryDelay);
+                retryDelay *= 2;
+            }
+        }
+        throw new Error('Max retries exceeded');
+    }
+
+    function changeWeek(weekOffset) {
+        loadModalContent('{% url "appointments_modal" %}?week=' + weekOffset);
+    }
+
+    // Make available globally
+    window.changeWeek = changeWeek;
+
+    async function loadAvailableTimeSlots() {
+        // Get dates from calendar cells
+        const dayCells = document.querySelectorAll('.day-cell');
+        const dates = Array.from(dayCells).map(cell => cell.getAttribute('data-date'));
+
+        const container = document.getElementById('available-slots-container');
+
+        if (!container) {
+            return;
+        }
+
+        if (dates.length === 0) {
+            container.innerHTML = '<p class="text-gray-400 text-sm">No dates available.</p>';
+            return;
+        }
+
+        try {
+            const groomersResponse = await fetchWithRetry('/api/v1/groomers/');
+            const groomersData = await groomersResponse.json();
+            const groomers = groomersData.data || [];
+
+            if (groomers.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm">No groomers available.</p>';
+                return;
+            }
+
+            // Build parameter string for batch request
+            const groomerIds = groomers.map(g => g.id).join(',');
+            const datesString = dates.join(',');
+
+            // Single batch API call to fetch all time slots
+            const batchResponse = await fetchWithRetry(`/api/v1/admin/time-slots/batch/?groomer_ids=${groomerIds}&dates=${datesString}`);
+            const batchData = await batchResponse.json();
+            const batchTimeSlots = (batchData.data && batchData.data.time_slots) || [];
+
+            // Create a map for quick lookup: { groomerId_date: [slots] }
+            const timeSlotsMap = {};
+            for (const slotData of batchTimeSlots) {
+                const key = `${slotData.groomer_id}_${slotData.date}`;
+                timeSlotsMap[key] = slotData.slots;
+            }
+
+            // Build HTML
+            let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+
+            for (const groomer of groomers) {
+                html += `
+                    <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
+                                ${groomer.name.charAt(0).toUpperCase()}
+                            </div>
+                            <h4 class="font-semibold text-gray-800 text-lg">${groomer.name}</h4>
+                        </div>
+                        <div class="space-y-3">
+                `;
+
+                let hasSlots = false;
+
+                for (const date of dates) {
+                    const dateObj = new Date(date + 'T00:00:00');
+                    const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+                    const key = `${groomer.id}_${date}`;
+                    const slots = timeSlotsMap[key] || [];
+
+                    // Get appointments for this day to filter out booked slots
+                    const appointments = getAppointmentsForDate(date);
+                    const bookedTimes = appointments.map(appt => appt.time);
+
+                    // Filter out booked slots
+                    const availableSlots = slots.filter(slot => {
+                        const slotStart = slot.start;
+                        return !bookedTimes.includes(slotStart);
+                    });
+
+                    if (availableSlots.length > 0) {
+                        hasSlots = true;
+                        html += `
+                            <div class="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                <div class="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    ${formattedDate}
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    ${availableSlots.map(slot => `
+                                        <span class="px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded border border-green-200 cursor-default">
+                                            ${formatTime(slot.start)}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (!hasSlots) {
+                    html += `
+                        <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-100">
+                            <p class="text-gray-400 text-sm">No available time slots this week.</p>
+                        </div>
+                    `;
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+
+        } catch (error) {
+            console.error('Error loading available time slots:', error);
+            container.innerHTML = '<p class="text-red-400 text-sm">Error loading available time slots.</p>';
+        }
+    }
+
+    // Make available globally
+    window.loadAvailableTimeSlots = loadAvailableTimeSlots;
+
+    function getAppointmentsForDate(date) {
+        const dayCell = document.querySelector(`.day-cell[data-date="${date}"]`);
+        if (!dayCell) return [];
+
+        const appointmentElements = dayCell.querySelectorAll('.text-xs.font-semibold.text-gray-700');
+        return Array.from(appointmentElements).map(el => el.textContent.trim()).map(time => convertTo24Hour(time));
+    }
+
+    function convertTo24Hour(time12) {
+        const [time, period] = time12.split(' ');
+        let [hours, minutes] = time.split(':');
+
+        if (period === 'PM' && hours !== '12') {
+            hours = parseInt(hours) + 12;
+        } else if (period === 'AM' && hours === '12') {
+            hours = '0';
+        }
+
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+    }
+
+    function formatTime(time24) {
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+    }
+
+    window.handleRightClick = function handleRightClick(event, date, dayName) {
+        event.preventDefault();
+        window.contextMenuDate = date;
+        window.contextMenuDayName = dayName;
+
+        const menu = document.getElementById('context-menu');
+        if (menu) {
+            menu.style.left = event.clientX + 'px';
+            menu.style.top = event.clientY + 'px';
+            menu.classList.remove('hidden');
+        }
+    }
+
+    window.openTimeSlotEditor = function openTimeSlotEditor() {
+        const contextMenu = document.getElementById('context-menu');
+        if (contextMenu) {
+            contextMenu.classList.add('hidden');
+        }
+
+        // Load the time slot editor modal
+        const url = '{% url "time_slot_editor_modal" %}?date=' + window.contextMenuDate + '&day_name=' + window.contextMenuDayName;
+        if (window.loadModalContent && typeof window.loadModalContent === 'function') {
+            window.loadModalContent(url);
+        }
+    }
+
+    // Fetch time slots for a specific date and groomer
+    async function fetchTimeSlots(date, groomerId) {
+        try {
+            const response = await fetchWithRetry(`/api/v1/admin/time-slots/day/?groomer_id=${groomerId}&date=${date}`);
+            const data = await response.json();
+            return (data.data && data.data.slots) || [];
+        } catch (error) {
+            console.error('Error fetching time slots:', error);
+            return [];
+        }
+    }
+
+    // Fetch all groomers (with caching)
+    async function fetchGroomers() {
+        if (window.groomersCache && window.groomersCacheTimestamp) {
+            const cacheAge = Date.now() - window.groomersCacheTimestamp;
+            if (cacheAge < window.GROOMERS_CACHE_DURATION) {
+                console.log('[DEBUG] Using cached groomers data');
+                return window.groomersCache;
+            }
+        }
+
+        try {
+            console.log('[DEBUG] Fetching groomers from API');
+            const response = await fetchWithRetry('/api/v1/groomers/');
+            const data = await response.json();
+            window.groomersCache = data.data || [];
+            window.groomersCacheTimestamp = Date.now();
+            return window.groomersCache;
+        } catch (error) {
+            console.error('Error fetching groomers:', error);
+            return [];
+        }
+    }
+
+    // Check if any groomer has time slots for the current date
+    async function checkForExistingTimeSlots(date) {
+        const groomers = await fetchGroomers();
+        for (const groomer of groomers) {
+            const slots = await fetchTimeSlots(date, groomer.id);
+            if (slots && slots.length > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Copy ALL groomers' time slots for the current date
+    async function copyAllGroomersTimeSlots() {
+        const date = window.contextMenuDate;
+        const groomers = await fetchGroomers();
+        const timeSlotsData = { date: date, groomers: [] };
+
+        for (const groomer of groomers) {
+            const slots = await fetchTimeSlots(date, groomer.id);
+            if (slots && slots.length > 0) {
+                timeSlotsData.groomers.push({
+                    groomer_id: groomer.id,
+                    groomer_name: groomer.name,
+                    slots: slots
+                });
+            }
+        }
+
+        if (timeSlotsData.groomers.length === 0) {
+            alert('No time slots found for any groomer on this date.');
+            hideContextMenu();
+            return;
+        }
+
+        // Store as JSON in clipboard (or use a simpler format)
+        const clipboardData = JSON.stringify(timeSlotsData);
+
+        // Try to copy to clipboard
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(clipboardData);
+                console.log('All groomers time slots copied to clipboard');
+                hideContextMenu();
+                return;
+            } catch (error) {
+                console.error('Clipboard copy failed:', error);
+            }
+        }
+
+        // Fallback to window variable
+        window.copiedTimeSlots = timeSlotsData;
+        window.copiedTimeSlotsTimestamp = Date.now();
+        console.log('All groomers time slots stored in memory (clipboard not available)');
+        hideContextMenu();
+    }
+
+    // Copy specific groomer's time slots
+    async function copySpecificGroomerTimeSlots(groomerId, groomerName) {
+        const date = window.contextMenuDate;
+        const slots = await fetchTimeSlots(date, groomerId);
+
+        if (!slots || slots.length === 0) {
+            alert(`No time slots found for ${groomerName} on this date.`);
+            hideContextMenu();
+            return;
+        }
+
+        const timeSlotsData = {
+            date: date,
+            groomers: [{
+                groomer_id: groomerId,
+                groomer_name: groomerName,
+                slots: slots
+            }]
+        };
+
+        // Try to copy to clipboard
+        const clipboardData = JSON.stringify(timeSlotsData);
+
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(clipboardData);
+                console.log(`Time slots for ${groomerName} copied to clipboard`);
+                hideContextMenu();
+                return;
+            } catch (error) {
+                console.error('Clipboard copy failed:', error);
+            }
+        }
+
+        // Fallback to window variable
+        window.copiedTimeSlots = timeSlotsData;
+        window.copiedTimeSlotsTimestamp = Date.now();
+        console.log(`Time slots for ${groomerName} stored in memory (clipboard not available)`);
+        hideContextMenu();
+    }
+
+    // Paste copied time slots to the current date
+    async function pasteCopiedTimeSlots() {
+        const targetDate = window.contextMenuDate;
+        let timeSlotsData = null;
+
+        // Try to read from clipboard first
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                const clipboardText = await navigator.clipboard.readText();
+                timeSlotsData = JSON.parse(clipboardText);
+            } catch (error) {
+                console.error('Clipboard read failed:', error);
+            }
+        }
+
+        // Fallback to window variable
+        if (!timeSlotsData && window.copiedTimeSlots) {
+            timeSlotsData = window.copiedTimeSlots;
+        }
+
+        if (!timeSlotsData || !timeSlotsData.groomers || timeSlotsData.groomers.length === 0) {
+            showNotificationModal('Error', 'No copied time slots found. Please copy time slots first.');
+            hideContextMenu();
+            return;
+        }
+
+        const sourceDate = timeSlotsData.date;
+        const groomerCount = timeSlotsData.groomers.length;
+        const groomerNames = timeSlotsData.groomers.map(g => g.groomer_name).join(', ');
+
+        const confirmMsg = `This will copy time slots from ${sourceDate} to ${targetDate}.\n\n` +
+                          `Copying for: ${groomerNames}\n\n` +
+                          `Are you sure you want to continue?`;
+
+        showConfirmModal(confirmMsg, async () => {
+            let successCount = 0;
+            let errorMessages = [];
+
+            for (const groomerData of timeSlotsData.groomers) {
+                try {
+                    await setDayTimeSlots(groomerData.groomer_id, targetDate, groomerData.slots);
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to paste time slots for ${groomerData.groomer_name}:`, error);
+                    errorMessages.push(`${groomerData.groomer_name}: ${error.message || 'Unknown error'}`);
+                }
+            }
+
+            hideContextMenu();
+            loadAvailableTimeSlots();
+
+            if (successCount === groomerCount) {
+                showNotificationModal('Success', `Successfully copied time slots for ${groomerCount} groomer(s) from ${sourceDate} to ${targetDate}.`);
+            } else {
+                showNotificationModal('Partial Success', `Partially successful: ${successCount}/${groomerCount} groomer(s) updated.\n\nErrors:\n${errorMessages.join('\n')}`);
+            }
+        });
+    }
+
+    // Set time slots for a groomer on a specific date (replaces delete + create pattern)
+    async function setDayTimeSlots(groomId, date, slots) {
+        try {
+            const response = await fetch('/api/v1/admin/time-slots/set-day/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    groomer_id: groomId,
+                    date: date,
+                    time_slots: slots.map(s => ({
+                        start: s.start,
+                        end: s.end
+                    }))
+                })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to set time slots');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error setting time slots:', error);
+            throw error;
+        }
+    }
+
+    // Get CSRF token
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+               document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+    }
+
+    // Populate groomer submenu
+    async function populateGroomerSubmenu(date) {
+        console.log('[DEBUG] populateGroomerSubmenu called with date:', date);
+        const submenu = document.getElementById('groomer-submenu');
+        console.log('[DEBUG] submenu element:', submenu);
+        const existingOptions = submenu.querySelectorAll('.groomer-option');
+        existingOptions.forEach(option => option.remove());
+
+        const groomers = await fetchGroomers();
+        console.log('[DEBUG] groomers fetched:', groomers.length);
+        if (groomers.length === 0) {
+            console.log('[DEBUG] No groomers found, returning');
+            return;
+        }
+
+        // Add groomer options
+        for (const groomer of groomers) {
+            const option = document.createElement('button');
+            option.className = 'w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-green-100 hover:text-green-800 flex items-center gap-2 groomer-option';
+            option.setAttribute('data-action', 'copy-groomer-timeslots');
+            option.setAttribute('data-groomer-id', groomer.id);
+            option.setAttribute('data-groomer-name', groomer.name);
+            option.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+                ${groomer.name}
+            `;
+            submenu.appendChild(option);
+        }
+    }
+
+    // Hide all menus
+    function hideContextMenu() {
+        clearSubmenuHideTimeout();
+        const contextMenu = document.getElementById('context-menu');
+        const groomerSubmenu = document.getElementById('groomer-submenu');
+        if (contextMenu) {
+            contextMenu.classList.add('hidden');
+        }
+        if (groomerSubmenu) {
+            groomerSubmenu.classList.add('hidden');
+            groomerSubmenu.classList.add('pointer-events-none');
+        }
+    }
+
+    // Show custom confirmation modal
+    function showConfirmModal(message, onConfirm) {
+        const modal = document.getElementById('confirm-modal');
+        const messageEl = document.getElementById('confirm-modal-message');
+        const cancelBtn = document.getElementById('confirm-modal-cancel');
+        const confirmBtn = document.getElementById('confirm-modal-confirm');
+
+        messageEl.textContent = message;
+
+        // Remove previous event listeners
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+        // Add new event listeners
+        newCancelBtn.addEventListener('click', function() {
+            modal.classList.add('hidden');
+            hideContextMenu();
+        });
+
+        newConfirmBtn.addEventListener('click', function() {
+            modal.classList.add('hidden');
+            onConfirm();
+        });
+
+        modal.classList.remove('hidden');
+    }
+
+    // Show custom notification modal
+    function showNotificationModal(title, message) {
+        const modal = document.getElementById('notification-modal');
+        const titleEl = document.getElementById('notification-modal-title');
+        const messageEl = document.getElementById('notification-modal-message');
+        const closeBtn = document.getElementById('notification-modal-close');
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+
+        // Remove previous event listener
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+        // Add new event listener
+        newCloseBtn.addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+
+        modal.classList.remove('hidden');
+    }
+
+    // Load available time slots when modal loads
+    loadAvailableTimeSlots();
+
+    // Close menus on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideContextMenu();
+            const confirmModal = document.getElementById('confirm-modal');
+            const notificationModal = document.getElementById('notification-modal');
+            if (confirmModal && !confirmModal.classList.contains('hidden')) {
+                confirmModal.classList.add('hidden');
+            }
+            if (notificationModal && !notificationModal.classList.contains('hidden')) {
+                notificationModal.classList.add('hidden');
+            }
+        }
+    });
+
+    // Close custom modals when clicking outside
+    document.addEventListener('click', function(e) {
+        const confirmModal = document.getElementById('confirm-modal');
+        const notificationModal = document.getElementById('notification-modal');
+
+        if (confirmModal && !confirmModal.classList.contains('hidden') && e.target === confirmModal) {
+            confirmModal.classList.add('hidden');
+            hideContextMenu();
+        }
+
+        if (notificationModal && !notificationModal.classList.contains('hidden') && e.target === notificationModal) {
+            notificationModal.classList.add('hidden');
+        }
+    });
+
+    // Handle hover events for groomer submenu
+    document.addEventListener('mouseover', function(event) {
+        const groomerMenuTrigger = event.target && event.target.closest ? event.target.closest('.groomer-menu-trigger') : null;
+        if (groomerMenuTrigger) {
+            const copySpecificBtn = groomerMenuTrigger.querySelector('[data-action="copy-specific-groomer"]');
+            if (copySpecificBtn) {
+                const submenu = document.getElementById('groomer-submenu');
+                if (submenu) {
+                    const rect = copySpecificBtn.getBoundingClientRect();
+                    const viewportWidth = window.innerWidth;
+                    const submenuWidth = 192; // min-w-48 = 12rem = 192px
+
+                    // Check if submenu would go off-screen on the right
+                    if (rect.right + 4 + submenuWidth > viewportWidth) {
+                        // Position on the left side
+                        submenu.style.left = (rect.left - submenuWidth - 4) + 'px';
+                    } else {
+                        // Position on the right side
+                        submenu.style.left = (rect.right + 4) + 'px';
+                    }
+
+                    submenu.style.top = rect.top + 'px';
+                    submenu.classList.remove('hidden');
+                    submenu.classList.remove('pointer-events-none');
+                }
+            }
+        }
+    });
+
+    // Hide submenu when mouse leaves both trigger and submenu
+    document.addEventListener('mouseout', function(event) {
+        const relatedTarget = event.relatedTarget;
+        const isLeavingToOutside = !event.relatedTarget || (
+            (!event.relatedTarget.closest || !event.relatedTarget.closest('.groomer-menu-trigger')) &&
+            (!event.relatedTarget.closest || !event.relatedTarget.closest('#groomer-submenu'))
+        );
+
+        if (event.target && event.target.closest && event.target.closest('.groomer-menu-trigger') && isLeavingToOutside) {
+            setSubmenuHideTimeout();
+        }
+
+        if (event.target && event.target.closest && event.target.closest('#groomer-submenu') && isLeavingToOutside) {
+            setSubmenuHideTimeout();
+        }
+    });
+
+    // Set timeout to hide submenu
+    function setSubmenuHideTimeout() {
+        clearSubmenuHideTimeout();
+        window.submenuHoverTimeout = setTimeout(() => {
+            const submenu = document.getElementById('groomer-submenu');
+            if (submenu) {
+                submenu.classList.add('hidden');
+                submenu.classList.add('pointer-events-none');
+            }
+        }, 200);
+    }
+
+    // Clear submenu hide timeout
+    function clearSubmenuHideTimeout() {
+        if (window.submenuHoverTimeout) {
+            clearTimeout(window.submenuHoverTimeout);
+            window.submenuHoverTimeout = null;
+        }
+    }
+
+    // Prevent submenu from hiding when hovering over it
+    document.addEventListener('mouseenter', function(event) {
+        if (event.target && event.target.closest && event.target.closest('#groomer-submenu')) {
+            clearSubmenuHideTimeout();
+        }
+    }, true);
+
+    // Prevent submenu from hiding when hovering over the trigger
+    document.addEventListener('mouseenter', function(event) {
+        if (event.target && event.target.closest && event.target.closest('.groomer-menu-trigger')) {
+            clearSubmenuHideTimeout();
+        }
+    }, true);
+
+    // Set up event delegation
+    document.addEventListener('click', async function(event) {
+        const clickInContextMenu = event.target && event.target.closest ? event.target.closest('#context-menu') : null;
+        const clickInSubmenu = event.target && event.target.closest ? event.target.closest('#groomer-submenu') : null;
+        const clickInDayCell = event.target && event.target.closest ? event.target.closest('.day-cell') : null;
+
+        if (!clickInContextMenu && !clickInSubmenu && !clickInDayCell) {
+            hideContextMenu();
+        }
+
+        // Handle change-week buttons
+        const changeWeekBtn = event.target && event.target.closest ? event.target.closest('[data-action="change-week"]') : null;
+        if (changeWeekBtn) {
+            const offset = parseInt(changeWeekBtn.getAttribute('data-offset'));
+            changeWeek(window.weekOffset + offset);
+        }
+
+        // Handle open-time-slot-editor button
+        const openTimeSlotBtn = event.target && event.target.closest ? event.target.closest('[data-action="open-time-slot-editor"]') : null;
+        if (openTimeSlotBtn) {
+            openTimeSlotEditor();
+        }
+
+        // Handle copy-all-groomers button
+        const copyAllBtn = event.target && event.target.closest ? event.target.closest('[data-action="copy-all-groomers"]') : null;
+        if (copyAllBtn) {
+            await copyAllGroomersTimeSlots();
+        }
+
+        // Handle copy-groomer-timeslots button (specific groomer)
+        const copyGroomerBtn = event.target && event.target.closest ? event.target.closest('[data-action="copy-groomer-timeslots"]') : null;
+        if (copyGroomerBtn) {
+            event.stopPropagation();
+            const groomerId = parseInt(copyGroomerBtn.getAttribute('data-groomer-id'));
+            const groomerName = copyGroomerBtn.getAttribute('data-groomer-name');
+            await copySpecificGroomerTimeSlots(groomerId, groomerName);
+        }
+
+        // Handle paste-copied-slots button
+        const pasteBtn = event.target && event.target.closest ? event.target.closest('[data-action="paste-copied-slots"]') : null;
+        if (pasteBtn) {
+            event.stopPropagation();
+            await pasteCopiedTimeSlots();
+        }
+    });
+
+    // Handle right-click on day cells
+    document.addEventListener('contextmenu', async function(event) {
+        const dayCell = event.target && event.target.closest ? event.target.closest('.day-cell') : null;
+        if (dayCell) {
+            event.preventDefault();
+            window.contextMenuDate = dayCell.getAttribute('data-date');
+            window.contextMenuDayName = dayCell.getAttribute('data-day-name');
+
+            // Clear any pending submenu hide timeout
+            clearSubmenuHideTimeout();
+
+            const menu = document.getElementById('context-menu');
+            const copyOptionsContainer = document.getElementById('copy-options-container');
+            const groomerSubmenu = document.getElementById('groomer-submenu');
+
+            if (menu) {
+                // Hide groomer submenu when opening new context menu
+                if (groomerSubmenu) {
+                    groomerSubmenu.classList.add('hidden');
+                }
+
+                menu.style.left = event.clientX + 'px';
+                menu.style.top = event.clientY + 'px';
+                menu.classList.remove('hidden');
+
+                // Always show copy options and pre-populate groomer submenu
+                copyOptionsContainer.classList.remove('hidden');
+                await populateGroomerSubmenu(window.contextMenuDate);
+            }
+        }
+    });
+
+    // Add hover effects for context menu buttons
+    const contextMenu = document.getElementById('context-menu');
+    if (contextMenu) {
+        contextMenu.addEventListener('mouseover', function(event) {
+            const button = event.target.closest('button');
+            if (button) {
+                button.style.backgroundColor = '#e0e7ff'; // blue-100
+                button.style.color = '#1e40af'; // blue-800
+            }
+        });
+
+        contextMenu.addEventListener('mouseout', function(event) {
+            const button = event.target.closest('button');
+            if (button) {
+                button.style.backgroundColor = '';
+                button.style.color = '';
+            }
+        });
+    }
+
+    // Add hover effects for groomer submenu buttons
+    const groomerSubmenu = document.getElementById('groomer-submenu');
+    if (groomerSubmenu) {
+        groomerSubmenu.addEventListener('mouseover', function(event) {
+            const button = event.target.closest('button');
+            if (button) {
+                button.style.backgroundColor = '#dcfce7'; // green-100
+                button.style.color = '#166534'; // green-800
+            }
+        });
+
+        groomerSubmenu.addEventListener('mouseout', function(event) {
+            const button = event.target.closest('button');
+            if (button) {
+                button.style.backgroundColor = '';
+                button.style.color = '';
+            }
+        });
+    }
+})();
+</script>

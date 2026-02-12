@@ -1,0 +1,83 @@
+Follow all rules ALWAYS. 
+I. Project Foundation & Structure
+Use a Custom User Model Immediately: Before running your first migration, create a custom user model inheriting from AbstractUser. Point AUTH_USER_MODEL to it. Changing this mid-project is difficult and prone to failure.
+
+Isolate Dependencies: Always use a virtual environment (venv or poetry). Never install project packages globally.
+
+Pin Dependency Versions: Use requirements.txt or pyproject.toml with strict version numbers (e.g., Django==5.0.2, not Django>=5.0).
+
+Modularize Applications: Break code into small, distinct apps based on functionality (e.g., users, billing, inventory), not technical layers.
+
+Keep Views Thin: Logic belongs in models.py (business logic) or forms.py (validation logic), not in views.py.
+
+Separate Settings: Do not use a single settings.py. Split settings into base.py, development.py, and production.py.
+
+II. Security & Environment
+Environment Variables: Never commit secrets (API keys, database credentials, SECRET_KEY) to version control. Use .env files and libraries like python-dotenv or django-environ.
+
+Secret Key Rotation: Ensure your SECRET_KEY is random, long, and kept secret.
+
+Debug Mode: Set DEBUG = False explicitly in production. DEBUG = True leaks sensitive environment data and SQL queries on errors.
+
+Allowed Hosts: Explicitly set ALLOWED_HOSTS in production to prevent Host Header attacks.
+
+HTTPS Enforcement: Set SECURE_SSL_REDIRECT = True, SESSION_COOKIE_SECURE = True, and CSRF_COOKIE_SECURE = True in production.
+
+Content Security Policy (CSP): Implement CSP headers to strictly define where scripts, styles, and media can load from.
+
+Rename Admin URL: Change the default admin/ URL path to something unpredictable to reduce brute-force attempts.
+
+III. Database & ORM Performance
+Select Related/Prefetch Related: Use select_related() for ForeignKey relationships and prefetch_related() for ManyToMany relationships to prevent the N+1 query problem.
+
+Database Indexing: Add db_index=True to model fields frequently used in filter(), exclude(), or order_by().
+
+Atomic Transactions: Use transaction.atomic() for operations involving multiple database writes to ensure data integrity (all-or-nothing).
+
+Bulk Operations: Use bulk_create() and bulk_update() when handling lists of objects instead of saving them in a loop.
+
+Avoid Generic Foreign Keys: Avoid GenericForeignKey unless strictly necessary; they break referential integrity constraints and are slow to query.
+
+Persistent Connections: Enable persistent database connections (CONN_MAX_AGE) in production to reduce overhead.
+
+IV. Code Quality & Maintainability
+Type Hinting: Use Python type hints (PEP 484) for function arguments and return values.
+
+Linting & Formatting: Enforce PEP 8 standards using tools like ruff or black in a pre-commit hook.
+
+Fat Models, Skinny Views: Encapsulate logic in Model methods or Managers/QuerySets.
+
+Class-Based Views (CBVs): Prefer CBVs for standard CRUD operations to reduce code duplication; use Function-Based Views (FBVs) only for highly complex, non-standard logic.
+
+Reverse URL Lookups: Never hardcode URLs in templates or views. Use the {% url %} tag and reverse() function with namespaced URLs.
+
+V. Static & Media Files
+WhiteNoise: Use WhiteNoise for serving static files in production if not using a dedicated CDN.
+
+Media Separation: Store user-uploaded files (Media) on cloud storage (e.g., AWS S3, Google Cloud Storage), not the local server filesystem.
+
+ManifestStorage: Use ManifestStaticFilesStorage to append hash values to static filenames, breaking browser cache when files change.
+
+VI. Testing & CI/CD
+Test Coverage: Write unit tests for models, views, and forms. specific focus on permissions and edge cases.
+
+Factory Boy: Use factory_boy for generating test data instead of static fixtures.
+
+CI Pipeline: Run tests and linters automatically on every Pull Request using GitHub Actions or GitLab CI.
+
+VII. Production Deployment Architecture
+WSGI/ASGI Server: Use a production-grade application server like Gunicorn (WSGI) or Uvicorn (ASGI), never runserver.
+
+Reverse Proxy: Place Nginx or Apache in front of the application server to handle client connections, SSL termination, and static files.
+
+Logging: Configure Django logging to send errors to a monitoring service (e.g., Sentry) or standard output (for containerized environments), not just local files.
+
+Health Checks: Implement a dedicated /health/ endpoint that checks database and cache connectivity for load balancers.
+
+VIII. Specific Django Pitfalls
+Timezones: Always store datetimes in UTC (USE_TZ = True). Convert to local time only at the template/display layer.
+
+Migration Management: Never alter migration files manually after creation. If a migration is wrong, revert and recreate it.
+
+JSONField: Use the native JSONField (available in all supported databases) for unstructured data, but do not use it as a substitute for proper relational modeling.
+

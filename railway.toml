@@ -1,0 +1,34 @@
+# Railway Deployment Configuration
+
+# Railway will automatically provide DATABASE_URL for PostgreSQL
+# Railway will provide persistent storage at /data for media files
+
+# Build and run configuration
+[build]
+builder = "nixpacks"
+
+[start]
+command = "gunicorn myproject.wsgi:application"
+
+# Environment variables (set these in Railway dashboard)
+# DEBUG=False
+# SECRET_KEY=<generate secure key>
+# ALLOWED_HOSTS=<your-railway-domain>.railway.app
+# DJANGO_SETTINGS_MODULE=myproject.settings.production
+
+# Volume mounts (add in Railway dashboard)
+# - Mount point: /data
+# - Purpose: Persistent media storage (groomer images)
+
+# Services
+[services.web]
+# Railway automatically detects Python projects
+# No additional config needed
+
+# PostgreSQL database (add in Railway dashboard)
+# Service type: PostgreSQL
+# Environment variable: DATABASE_URL (auto-provided by Railway)
+
+# Redis cache (optional - add in Railway dashboard if needed)
+# Service type: Redis
+# Environment variable: REDIS_URL

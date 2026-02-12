@@ -1,0 +1,1186 @@
+{% load static %}
+<div id="booking-modal">
+    <!-- Pass preloaded data to JavaScript -->
+    {% if preloaded_dog %}
+        <script>
+            window.preloadedDog = {
+                id: {{ preloaded_dog.id }},
+                name: "{{ preloaded_dog.name|escapejs }}",
+                breed_id: {{ preloaded_dog.breed_id|default:'null' }},
+                breed_name: "{{ preloaded_dog.breed_name|default:''|escapejs }}",
+                weight: {{ preloaded_dog.weight|default:'null' }},
+                age: "{{ preloaded_dog.age|default:''|escapejs }}",
+                notes: "{{ preloaded_dog.notes|default:''|escapejs }}"
+            };
+        </script>
+    {% endif %}
+    {% if preloaded_customer %}
+        <script>
+            window.preloadedCustomer = {
+                name: "{{ preloaded_customer.name|escapejs }}",
+                email: "{{ preloaded_customer.email|escapejs }}",
+                phone: "{{ preloaded_customer.phone|escapejs }}"
+            };
+        </script>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6 px-8 pt-8">
+        <h2 class="text-2xl font-semibold text-gray-800" id="step-title">Groomer</h2>
+        <button onclick="closeModal()" class="px-3 py-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="px-8 mb-6">
+        <div class="flex" id="progress-steps" style="--circle-size: 3.5rem; --spacing: 0.75rem;">
+            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
+                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 text-white" data-step="1" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(20 184 166);">1</div>
+                <span class="text-xs text-gray-500">Groomer</span>
+            </div>
+            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
+                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="2" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">2</div>
+                <span class="text-xs text-gray-500">Breed</span>
+            </div>
+            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
+                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="3" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">3</div>
+                <span class="text-xs text-gray-500">Age</span>
+            </div>
+            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
+                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="4" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">4</div>
+                <span class="text-xs text-gray-500">Day</span>
+            </div>
+            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
+                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="5" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">5</div>
+                <span class="text-xs text-gray-500">Time</span>
+            </div>
+            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
+                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="6" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">6</div>
+                <span class="text-xs text-gray-500">Review</span>
+            </div>
+            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
+                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="7" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">7</div>
+                <span class="text-xs text-gray-500">Done</span>
+            </div>
+            <style>
+                .step-item::after {
+                    content: "";
+                    position: relative;
+                    top: calc(var(--circle-size) / 2);
+                    width: calc(100% - var(--circle-size) - calc(var(--spacing) * 2));
+                    left: calc(50% + calc(var(--circle-size) / 2 + var(--spacing)));
+                    height: 2px;
+                    background-color: rgb(229 231 235);
+                    order: -1;
+                    z-index: -1;
+                    transition: background-color 0.3s ease;
+                }
+                .step-item:last-child::after {
+                    display: none;
+                }
+                .step-item.line-green::after {
+                    background-color: rgb(34 197 94);
+                }
+            </style>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="px-8 py-12">
+        <div class="flex justify-center items-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            <span class="ml-2 text-gray-600">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="px-8 py-12 hidden">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p class="text-red-600" id="error-message"></p>
+            <button onclick="window.BookingModal.init()" class="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Retry</button>
+        </div>
+    </div>
+
+        <!-- Step 1: Select Groomer -->
+    <div id="step-1" class="booking-step px-8 pb-8 hidden">
+        <p class="text-gray-600 mb-2">Select a preferred groomer for your appointment.</p>
+        <p class="text-sm text-gray-500 mb-6 italic">Note: This is a preference, not guaranteed. If your preferred groomer is unavailable, we'll show you alternatives.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="groomers-list">
+            <!-- Groomer cards will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Step 2: Select Breed & Weight -->
+    <div id="step-2" class="booking-step px-8 pb-8 hidden">
+        <p class="text-gray-600 mb-6">Select your dog's breed and enter their weight.</p>
+        <div class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Dog's Breed</label>
+                <select id="breed-select" onchange="window.BookingModal.onBreedChange()" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                    <option value="">Select breed...</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Dog's Weight (lbs)</label>
+                <input type="number" id="dog-weight" step="0.01" min="0" oninput="window.BookingModal.updatePricePreview()" placeholder="Enter exact weight" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Dog's Name</label>
+                <input type="text" id="dog-name" oninput="window.BookingModal.updatePricePreview()" placeholder="Enter your dog's name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+            </div>
+            <div id="price-preview-container" class="bg-teal-50 border border-teal-200 rounded-lg p-4 hidden">
+                <div class="text-sm text-gray-600 mb-2">Price Preview (per service):</div>
+                <div class="space-y-2" id="price-preview-list"></div>
+                <div id="price-preview-error" class="text-red-600 text-sm mt-2 hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Enter Dog Age -->
+    <div id="step-3" class="booking-step px-8 pb-8 hidden">
+        <p class="text-gray-600 mb-6">How old is your dog?</p>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Dog's Age</label>
+            <input type="text" id="dog-age" placeholder="e.g., 2 years, 6 months" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+        </div>
+    </div>
+
+    <!-- Step 4: Select Day -->
+    <div id="step-4" class="booking-step px-8 pb-8 hidden">
+        <p class="text-gray-600 mb-6">Select a date for your appointment.</p>
+
+        <!-- Loading state for days -->
+        <div id="days-loading" class="hidden flex justify-center items-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            <span class="ml-2 text-gray-600">Loading available days...</span>
+        </div>
+
+        <!-- Error state for days -->
+        <div id="days-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p class="text-red-600" id="days-error-message"></p>
+            <button onclick="window.BookingModal.retryLoadDays()" class="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm">Retry</button>
+        </div>
+
+        <!-- Empty state for no available days -->
+        <div id="days-empty" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <p class="text-yellow-700">No available time slots in the next 14 days. Please choose a different groomer or contact us to schedule an appointment.</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3" id="available-days-list">
+            <!-- Available days will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Step 5: Select Time -->
+    <div id="step-5" class="booking-step px-8 pb-8 hidden">
+        <p class="text-gray-600 mb-6">Select an available time slot.</p>
+
+        <!-- Loading state for time slots -->
+        <div id="slots-loading" class="hidden flex justify-center items-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            <span class="ml-2 text-gray-600">Loading available times...</span>
+        </div>
+
+        <!-- Error state for time slots -->
+        <div id="slots-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p class="text-red-600" id="slots-error-message"></p>
+            <button onclick="window.BookingModal.retryLoadSlots()" class="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm">Retry</button>
+        </div>
+
+        <!-- Empty state for no time slots -->
+        <div id="slots-empty" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <p class="text-yellow-700">No available time slots for this date. Please select a different date.</p>
+        </div>
+
+        <!-- Primary slots section -->
+        <div id="primary-slots-section" class="mb-6">
+            <h3 id="primary-slots-title" class="text-sm font-semibold text-gray-700 mb-3 hidden">
+                Available with <span id="primary-groomer-name" class="text-teal-600"></span>
+            </h3>
+            <div class="grid grid-cols-3 md:grid-cols-4 gap-3" id="primary-time-slots-list">
+                <!-- Primary time slots will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Override slots section -->
+        <div id="override-slots-section" class="mb-6">
+            <h3 id="override-slots-title" class="text-sm font-semibold text-gray-700 mb-3 hidden">
+                Also available with other groomers:
+            </h3>
+            <p id="override-slots-note" class="text-xs text-gray-500 mb-3 hidden italic">
+                Groomer preference not guaranteed. Click to see groomer options.
+            </p>
+            <div class="grid grid-cols-3 md:grid-cols-4 gap-3" id="override-time-slots-list">
+                <!-- Override time slots will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 6: Select Service & Review -->
+    <div id="step-6" class="booking-step px-8 pb-8 hidden">
+        <p class="text-gray-600 mb-6">Select a service and review your appointment details.</p>
+        <div class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Service</label>
+                <select id="service-select" onchange="window.BookingModal.updateSummary()" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                    <option value="">Select service...</option>
+                </select>
+            </div>
+
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Appointment Summary</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Preferred Groomer:</span>
+                        <span class="text-gray-800 font-medium" id="summary-preferred-groomer">Not selected</span>
+                    </div>
+                    <div class="flex justify-between" id="summary-actual-groomer-row" style="display: none;">
+                        <span class="text-gray-600">Booked with:</span>
+                        <span class="text-gray-800 font-medium" id="summary-actual-groomer">Not selected</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Dog:</span>
+                        <span class="text-gray-800 font-medium" id="summary-dog">Not selected</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Weight:</span>
+                        <span class="text-gray-800 font-medium" id="summary-weight">0 lbs</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Date:</span>
+                        <span class="text-gray-800 font-medium" id="summary-date">Not selected</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Time:</span>
+                        <span class="text-gray-800 font-medium" id="summary-time">Not selected</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Service:</span>
+                        <span class="text-gray-800 font-medium" id="summary-service">Not selected</span>
+                    </div>
+                    <div id="price-breakdown-container" class="border-t border-gray-200 mt-2 pt-2 hidden">
+                        <div id="price-breakdown-list"></div>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 mt-4 pt-4">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-gray-800">Total Price:</span>
+                        <span class="text-2xl font-bold text-gray-900" id="total-price">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                <input type="text" id="customer-name" oninput="window.BookingModal.updateSummary()" placeholder="Enter your full name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                <input type="tel" id="customer-phone" oninput="window.BookingModal.updateSummary()" placeholder="Enter your phone number" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" id="customer-email" oninput="window.BookingModal.updateSummary()" placeholder="Enter your email address" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Notes (optional)</label>
+                <textarea id="customer-notes" oninput="window.BookingModal.updateSummary()" placeholder="Any special requests or notes (optional)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 7: Confirmation -->
+    <div id="step-7" class="booking-step px-8 pb-8 hidden">
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-2">Appointment Booked!</h3>
+            <p class="text-gray-600 mb-6">We'll confirm your appointment soon.</p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-left mb-6">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Confirmation:</span>
+                        <span class="font-semibold text-gray-800" id="confirmation-id">#</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Customer:</span>
+                        <span class="text-gray-800" id="confirmation-customer"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Phone:</span>
+                        <span class="text-gray-800" id="confirmation-phone"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Email:</span>
+                        <span class="text-gray-800" id="confirmation-email"></span>
+                    </div>
+                    <div class="flex justify-between" id="confirmation-notes-row" style="display: none;">
+                        <span class="text-gray-600">Notes:</span>
+                        <span class="text-gray-800" id="confirmation-notes"></span>
+                    </div>
+                    <div class="border-t border-gray-200 mt-2 pt-2"></div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Preferred Groomer:</span>
+                        <span class="text-gray-800" id="confirmation-preferred-groomer"></span>
+                    </div>
+                    <div class="flex justify-between" id="confirmation-actual-groomer-row" style="display: none;">
+                        <span class="text-gray-600">Booked with:</span>
+                        <span class="text-gray-800 font-medium" id="confirmation-actual-groomer"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Dog:</span>
+                        <span class="text-gray-800" id="confirmation-dog"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Date & Time:</span>
+                        <span class="text-gray-800" id="confirmation-datetime"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Service:</span>
+                        <span class="text-gray-800" id="confirmation-service"></span>
+                    </div>
+                    <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between">
+                        <span class="font-semibold text-gray-800">Total Paid:</span>
+                        <span class="font-bold text-gray-900" id="confirmation-total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition">Close</button>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div id="booking-nav-buttons" class="flex justify-end gap-3 px-8 pb-12 pt-4 hidden">
+        <button id="prev-button" onclick="window.BookingModal.previousStep()" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition hidden">
+            Previous
+        </button>
+        <button id="next-button" onclick="window.BookingModal.nextStep()" class="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-700 transition">
+            Next
+        </button>
+    </div>
+</div>
+
+<script>
+window.BookingModal = (function() {
+    let state = {
+        currentStep: 1,
+        totalSteps: 7,
+        loading: true,
+        error: false,
+        errorMessage: '',
+        bookingData: {},
+        groomers: [],
+        services: [],
+        breeds: [],
+        availableDays: [],
+        timeSlots: [],
+        primarySlots: [],
+        overrideSlots: [],
+        pricePreview: [],
+        priceBreakdown: null,
+        totalPrice: 0,
+        confirmedAppointment: null,
+        priceCalculationError: null,
+        preferredGroomId: null,
+        actualGroomId: null,
+        isOverrideSlot: false
+    };
+
+    const stepLabels = {
+        1: 'Groomer',
+        2: 'Breed',
+        3: 'Age',
+        4: 'Day',
+        5: 'Time',
+        6: 'Review',
+        7: 'Done'
+    };
+
+    function getCsrfToken() {
+        const token = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (token) return token.value;
+        if (window.parent && window.parent !== window) {
+            const parentToken = window.parent.document.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (parentToken) return parentToken.value;
+        }
+        const cookieValue = `; ${document.cookie}`;
+        const parts = cookieValue.split(`; csrftoken=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    async function loadGroomers() {
+        const response = await fetch('/api/v1/groomers/');
+        const data = await response.json();
+        state.groomers = data.data || [];
+    }
+
+    async function loadServices() {
+        const response = await fetch('/api/v1/services/');
+        const data = await response.json();
+        state.services = data.data || [];
+    }
+
+    async function loadBreeds() {
+        const response = await fetch('/api/v1/breeds/');
+        const data = await response.json();
+        state.breeds = data.data || [];
+    }
+
+    function renderGroomers() {
+        const container = document.getElementById('groomers-list');
+        container.innerHTML = state.groomers.map(groomer => `
+            <div onclick="window.BookingModal.groomer(${groomer.id}, '${groomer.name}', this)"
+                 id="groomer-${groomer.id}"
+                 class="groomer-card border rounded-lg p-4 cursor-pointer transition border-gray-200 hover:border-teal-500 hover:shadow-md">
+                <div class="flex items-center">
+                    ${groomer.image ?
+                        `<img src="${groomer.image}" alt="${groomer.name}" class="w-12 h-12 rounded-full object-cover mr-3">` :
+                        `<div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>`
+                    }
+                    <div>
+                        <div class="font-semibold text-gray-800">${groomer.name}</div>
+                        <div class="text-xs text-gray-600">${groomer.specialties || 'Professional Groomer'}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderBreeds() {
+        const select = document.getElementById('breed-select');
+        select.innerHTML = '<option value="">Select breed...</option>' +
+            state.breeds.map(breed =>
+                `<option value="${breed.id}">${breed.name} ${breed.base_price ? ` ($${breed.base_price} base)` : ''}</option>`
+            ).join('');
+    }
+
+    function renderServices() {
+        const select = document.getElementById('service-select');
+        select.innerHTML = '<option value="">Select service...</option>' +
+            state.services.map(service =>
+                `<option value="${service.id}">${service.name}</option>`
+            ).join('');
+    }
+
+    async function init() {
+        state.loading = true;
+        updateUI();
+
+        try {
+            await Promise.all([loadGroomers(), loadServices(), loadBreeds()]);
+            state.loading = false;
+            state.error = false;
+            renderGroomers();
+            renderBreeds();
+            renderServices();
+
+            // Load preloaded data if available
+            const preloadedDog = window.preloadedDog;
+            const preloadedCustomer = window.preloadedCustomer;
+
+            if (preloadedDog) {
+                state.bookingData.dogName = preloadedDog.name;
+                state.bookingData.breedId = preloadedDog.breed_id;
+                state.bookingData.breedName = preloadedDog.breed_name;
+                state.bookingData.dogWeight = preloadedDog.weight?.toString();
+                state.bookingData.dogAge = preloadedDog.age || '';
+                state.bookingData.notes = preloadedDog.notes || '';
+
+                // Pre-fill form fields
+                if (preloadedDog.breed_id) {
+                    const breedSelect = document.getElementById('breed-select');
+                    breedSelect.value = preloadedDog.breed_id;
+                    updatePricePreview();
+                }
+                const weightInput = document.getElementById('dog-weight');
+                weightInput.value = preloadedDog.weight || '';
+                const nameInput = document.getElementById('dog-name');
+                nameInput.value = preloadedDog.name || '';
+                const ageInput = document.getElementById('dog-age');
+                ageInput.value = preloadedDog.age || '';
+
+                updatePricePreview();
+            }
+
+            if (preloadedCustomer) {
+                state.bookingData.customerName = preloadedCustomer.name;
+                state.bookingData.customerPhone = preloadedCustomer.phone;
+                state.bookingData.customerEmail = preloadedCustomer.email;
+
+                // Pre-fill customer fields
+                const nameInput = document.getElementById('customer-name');
+                if (nameInput) nameInput.value = preloadedCustomer.name || '';
+                const phoneInput = document.getElementById('customer-phone');
+                if (phoneInput) phoneInput.value = preloadedCustomer.phone || '';
+                const emailInput = document.getElementById('customer-email');
+                if (emailInput) emailInput.value = preloadedCustomer.email || '';
+            }
+
+            updateUI();
+        } catch (error) {
+            console.error('Error initializing booking modal:', error);
+            state.loading = false;
+            state.error = true;
+            state.errorMessage = 'Unable to load booking data. Please try again.';
+            updateUI();
+        }
+    }
+
+    function updateUI() {
+        // Show/hide loading and error states
+        document.getElementById('loading-state').classList.toggle('hidden', !state.loading);
+        document.getElementById('error-state').classList.toggle('hidden', !state.error);
+
+        if (state.error) {
+            document.getElementById('error-message').textContent = state.errorMessage;
+        }
+
+        if (state.loading) return;
+
+        // Show current step
+        document.querySelectorAll('.booking-step').forEach(el => el.classList.add('hidden'));
+        const currentStepEl = document.getElementById(`step-${state.currentStep}`);
+        if (currentStepEl) {
+            currentStepEl.classList.remove('hidden');
+        }
+
+        // Update progress
+        updateProgress();
+
+        // Update navigation buttons
+        const navButtons = document.getElementById('booking-nav-buttons');
+        if (navButtons) {
+            navButtons.classList.remove('hidden');
+        }
+        document.getElementById('prev-button').classList.toggle('hidden', state.currentStep === 1);
+        document.getElementById('next-button').classList.toggle('hidden', state.currentStep === 7);
+
+        // Update step title
+        document.getElementById('step-title').textContent = stepLabels[state.currentStep] || '';
+    }
+
+    function updateProgress() {
+        const stepItems = document.querySelectorAll('.step-item');
+        const stepCircles = document.querySelectorAll('.step-circle');
+
+        stepCircles.forEach((circle, index) => {
+            const step = parseInt(circle.dataset.step);
+            if (step < state.currentStep) {
+                circle.style.backgroundColor = 'rgb(34 197 94)';
+            } else if (step === state.currentStep) {
+                circle.style.backgroundColor = 'rgb(20 184 166)';
+            } else {
+                circle.style.backgroundColor = 'rgb(229 231 235)';
+            }
+        });
+
+        // Update segments - color them green if we've passed that step
+        stepItems.forEach((item, index) => {
+            const stepNumber = index + 1;
+            if (stepNumber < state.currentStep) {
+                item.classList.add('line-green');
+            } else {
+                item.classList.remove('line-green');
+            }
+        });
+    }
+
+    function groomer(id, name, element) {
+        state.bookingData.groomId = id;
+        state.bookingData.groomerId = id;
+        state.bookingData.groomerName = name;
+
+        document.querySelectorAll('.groomer-card').forEach(card => {
+            card.classList.remove('border-teal-500', 'bg-teal-50');
+            card.classList.add('border-gray-200');
+        });
+
+        if (element) {
+            element.classList.remove('border-gray-200');
+            element.classList.add('border-teal-500', 'bg-teal-50');
+        }
+    }
+
+    function onBreedChange() {
+        const select = document.getElementById('breed-select');
+        const breed = state.breeds.find(b => b.id === parseInt(select.value));
+        state.bookingData.breedId = select.value;
+        state.bookingData.breedName = breed?.name;
+        updatePricePreview();
+    }
+
+    async function updatePricePreview() {
+        state.bookingData.dogWeight = document.getElementById('dog-weight').value;
+        state.bookingData.dogName = document.getElementById('dog-name').value;
+
+        if (!state.bookingData.breedId || !state.bookingData.dogWeight) {
+            state.pricePreview = [];
+            document.getElementById('price-preview-container').classList.add('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/booking/calculate-price/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    breed_id: parseInt(state.bookingData.breedId),
+                    dog_weight: parseFloat(state.bookingData.dogWeight)
+                })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                state.pricePreview = data.data.services;
+                state.priceCalculationError = null;
+                renderPricePreview();
+            } else {
+                state.pricePreview = [];
+                state.priceCalculationError = data.message || 'Unable to calculate prices';
+                renderPricePreview();
+            }
+        } catch (error) {
+            console.error('Error calculating price:', error);
+            state.pricePreview = [];
+            state.priceCalculationError = 'Network error calculating prices';
+            renderPricePreview();
+        }
+    }
+
+    function renderPricePreview() {
+        const container = document.getElementById('price-preview-list');
+        const services = state.pricePreview || [];
+
+        container.innerHTML = services.map(service =>
+            `<div class="flex justify-between text-sm">
+                <span class="text-gray-700">${service.name}</span>
+                <span class="font-semibold text-gray-900">$${service.price.toFixed(2)}</span>
+            </div>`
+        ).join('');
+
+        const hideContainer = services.length === 0 && !state.priceCalculationError;
+        document.getElementById('price-preview-container').classList.toggle('hidden', hideContainer);
+
+        const errorElement = document.getElementById('price-preview-error');
+        if (state.priceCalculationError) {
+            errorElement.textContent = state.priceCalculationError;
+            errorElement.classList.remove('hidden');
+        } else {
+            errorElement.classList.add('hidden');
+        }
+    }
+
+    function selectDate(date, display, element) {
+        state.bookingData.selectedDate = date;
+        state.bookingData.selectedDateDisplay = display;
+
+        document.querySelectorAll('#available-days-list > div').forEach(day => {
+            day.classList.remove('border-teal-500', 'bg-teal-50');
+            day.classList.add('border-gray-200');
+        });
+
+        if (element) {
+            element.classList.remove('border-gray-200');
+            element.classList.add('border-teal-500', 'bg-teal-50');
+        }
+    }
+
+    function selectTime(time, element, isOverride = false) {
+        state.bookingData.selectedTime = time;
+        state.isOverrideSlot = isOverride;
+
+        // Clear all slot selections
+        document.querySelectorAll('.slot-primary').forEach(slot => {
+            slot.classList.remove('border-teal-500', 'bg-teal-50');
+            slot.classList.add('border-gray-200');
+        });
+        document.querySelectorAll('.slot-override').forEach(slot => {
+            slot.classList.remove('border-amber-500', 'bg-amber-100');
+            slot.classList.add('border-amber-300');
+        });
+
+        if (element) {
+            if (isOverride) {
+                element.classList.remove('border-amber-300');
+                element.classList.add('border-amber-500', 'bg-amber-100');
+            } else {
+                element.classList.remove('border-gray-200');
+                element.classList.add('border-teal-500', 'bg-teal-50');
+            }
+        }
+    }
+
+    function renderAvailableDays() {
+        const container = document.getElementById('available-days-list');
+
+        if (!Array.isArray(state.availableDays) || state.availableDays.length === 0) {
+            document.getElementById('days-empty').classList.remove('hidden');
+            container.innerHTML = '';
+            return;
+        }
+
+        document.getElementById('days-empty').classList.add('hidden');
+        container.innerHTML = state.availableDays.map(day => {
+            const safeDate = String(day.date || '');
+            const safeWeekday = String(day.weekday || '').replace(/'/g, "\\'");
+            const safeDay = String(day.day || '');
+            const safeSlots = String(day.slots || '0');
+            const safeDisplay = String(day.display || '').replace(/'/g, "\\'");
+
+            return `<div onclick="window.BookingModal.selectDate('${safeDate}', '${safeDisplay}', this)"
+                 class="border rounded-lg p-4 cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition text-center border-gray-200">
+                <div class="font-semibold text-gray-800">${safeWeekday}</div>
+                <div class="text-2xl font-bold text-gray-900">${safeDay}</div>
+                <div class="text-xs text-gray-600">${safeSlots} slots available</div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderPrimarySlots() {
+        const container = document.getElementById('primary-time-slots-list');
+
+        if (!Array.isArray(state.primarySlots) || state.primarySlots.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = state.primarySlots.map(slot => {
+            const safeTime = String(slot.time || '');
+            const safeDisplay = String(slot.display || '').replace(/'/g, "\\'");
+            const safeDuration = String(slot.duration || '');
+
+            return `<div onclick="window.BookingModal.selectTime('${safeTime}', this, false)"
+                 class="slot-primary border rounded-lg p-4 cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition text-center border-gray-200">
+                <div class="font-semibold text-gray-800">${safeDisplay}</div>
+                ${safeDuration ? `<div class="text-xs text-gray-600">${safeDuration} min</div>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    function renderOverrideSlots() {
+        const container = document.getElementById('override-time-slots-list');
+
+        if (!Array.isArray(state.overrideSlots) || state.overrideSlots.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = state.overrideSlots.map(slot => {
+            const safeTime = String(slot.time || '');
+            const safeDisplay = String(slot.display || '').replace(/'/g, "\\'");
+            const safeDuration = String(slot.duration || '');
+            const groomerCount = slot.groomer_count || 0;
+            const groomersList = (slot.groomers || []).map(g => g.groomer_name).join(', ');
+
+            return `<div onclick="window.BookingModal.selectTime('${safeTime}', this, true)"
+                 class="slot-override border rounded-lg p-4 cursor-pointer hover:border-amber-500 hover:bg-amber-50 transition text-center border-amber-300 bg-amber-50/30">
+                <div class="font-semibold text-gray-800">${safeDisplay}</div>
+                ${safeDuration ? `<div class="text-xs text-gray-600">${safeDuration} min</div>` : ''}
+                <div class="text-xs text-amber-600 mt-1 font-medium">${groomerCount} groomer${groomerCount > 1 ? 's' : ''} available</div>
+                <div class="text-xs text-gray-500 preference-note mb-1">Groomer preference not guaranteed</div>
+                ${groomersList ? `<div class="text-xs text-gray-600">${groomersList}</div>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    async function updateSummary() {
+        state.bookingData.serviceId = document.getElementById('service-select').value;
+        state.bookingData.customerName = document.getElementById('customer-name').value;
+        state.bookingData.customerPhone = document.getElementById('customer-phone').value;
+        state.bookingData.customerEmail = document.getElementById('customer-email').value;
+        state.bookingData.notes = document.getElementById('customer-notes').value;
+
+        // Update summary display
+        document.getElementById('summary-preferred-groomer').textContent = state.bookingData.groomerName || 'Not selected';
+
+        // Show actual groomer row if override slot was selected
+        if (state.isOverrideSlot) {
+            document.getElementById('summary-actual-groomer-row').style.display = 'flex';
+            document.getElementById('summary-actual-groomer').textContent = 'Another groomer (selected from override slots)';
+        } else {
+            document.getElementById('summary-actual-groomer-row').style.display = 'none';
+        }
+
+        document.getElementById('summary-dog').textContent = `${state.bookingData.dogName || ''} (${state.bookingData.breedName || 'Unknown breed'})`;
+        document.getElementById('summary-weight').textContent = `${state.bookingData.dogWeight || 0} lbs`;
+        document.getElementById('summary-date').textContent = state.bookingData.selectedDateDisplay || 'Not selected';
+        document.getElementById('summary-time').textContent = state.bookingData.selectedTime || 'Not selected';
+
+        const service = state.services.find(s => s.id === parseInt(state.bookingData.serviceId));
+        document.getElementById('summary-service').textContent = service?.name || 'Not selected';
+
+        if (!state.bookingData.serviceId || !state.bookingData.breedId || !state.bookingData.dogWeight) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/booking/calculate-final-price/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    breed_id: parseInt(state.bookingData.breedId),
+                    service_id: parseInt(state.bookingData.serviceId),
+                    dog_weight: parseFloat(state.bookingData.dogWeight)
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                state.priceBreakdown = data.data.price_breakdown;
+                state.totalPrice = data.data.final_price;
+                renderPriceBreakdown();
+            }
+        } catch (error) {
+            console.error('Error calculating final price:', error);
+        }
+    }
+
+    function renderPriceBreakdown() {
+        const container = document.getElementById('price-breakdown-list');
+        container.innerHTML = state.priceBreakdown.map(item =>
+            `<div class="flex justify-between text-sm">
+                <span class="text-gray-600">${item.label}:</span>
+                <span class="text-gray-800">$${item.amount.toFixed(2)}</span>
+            </div>`
+        ).join('');
+        document.getElementById('price-breakdown-container').classList.toggle('hidden', !state.priceBreakdown);
+        document.getElementById('total-price').textContent = `$${state.totalPrice.toFixed(2)}`;
+    }
+
+    async function showStep4() {
+        // Reset states
+        document.getElementById('days-loading').classList.remove('hidden');
+        document.getElementById('days-error').classList.add('hidden');
+        document.getElementById('days-empty').classList.add('hidden');
+        document.getElementById('available-days-list').innerHTML = '';
+
+        state.loading = true;
+        updateUI();
+
+        try {
+            const response = await fetch(`/api/v1/booking/available-days/?groomer_id=${state.bookingData.groomerId}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            // Validate response structure
+            if (!data || !data.success || !data.data || !Array.isArray(data.data.days)) {
+                throw new Error('Invalid response format from server');
+            }
+
+            state.availableDays = data.data.days;
+            document.getElementById('days-loading').classList.add('hidden');
+            renderAvailableDays();
+            state.loading = false;
+            updateUI();
+        } catch (error) {
+            console.error('Error loading available days:', error);
+            document.getElementById('days-loading').classList.add('hidden');
+            document.getElementById('days-error').classList.remove('hidden');
+            document.getElementById('days-error-message').textContent =
+                `Unable to load available days: ${error.message}. Please try again.`;
+            state.loading = false;
+            updateUI();
+        }
+    }
+
+    async function retryLoadDays() {
+        await showStep4();
+    }
+
+    async function showStep5() {
+        // Reset states
+        document.getElementById('slots-loading').classList.remove('hidden');
+        document.getElementById('slots-error').classList.add('hidden');
+        document.getElementById('slots-empty').classList.add('hidden');
+        document.getElementById('primary-time-slots-list').innerHTML = '';
+        document.getElementById('override-time-slots-list').innerHTML = '';
+        document.getElementById('primary-slots-section').classList.add('hidden');
+        document.getElementById('override-slots-section').classList.add('hidden');
+        document.getElementById('primary-slots-title').classList.add('hidden');
+        document.getElementById('override-slots-title').classList.add('hidden');
+        document.getElementById('override-slots-note').classList.add('hidden');
+
+        state.loading = true;
+        updateUI();
+
+        try {
+            const response = await fetch(
+                `/api/v1/booking/time-slots/?groomer_id=${state.bookingData.groomerId}&date=${state.bookingData.selectedDate}&show_override=true`
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            // Validate response structure
+            if (!data || !data.success || !data.data) {
+                throw new Error('Invalid response format from server');
+            }
+
+            state.timeSlots = data.data.slots || [];
+            state.primarySlots = state.timeSlots.filter(slot => slot.is_primary);
+            state.overrideSlots = state.timeSlots.filter(slot => slot.is_override);
+
+            document.getElementById('slots-loading').classList.add('hidden');
+
+            // Check if there are any slots available
+            if (state.timeSlots.length === 0) {
+                document.getElementById('slots-empty').classList.remove('hidden');
+            } else {
+                document.getElementById('slots-empty').classList.add('hidden');
+            }
+
+            // Show/hide primary slots section
+            if (state.primarySlots.length > 0) {
+                document.getElementById('primary-slots-section').classList.remove('hidden');
+                document.getElementById('primary-slots-title').classList.remove('hidden');
+                document.getElementById('primary-groomer-name').textContent = state.bookingData.groomerName || 'Preferred';
+                renderPrimarySlots();
+            }
+
+            // Show/hide override slots section
+            if (state.overrideSlots.length > 0) {
+                document.getElementById('override-slots-section').classList.remove('hidden');
+                document.getElementById('override-slots-title').classList.remove('hidden');
+                document.getElementById('override-slots-note').classList.remove('hidden');
+                renderOverrideSlots();
+            }
+
+            state.loading = false;
+            updateUI();
+        } catch (error) {
+            console.error('Error loading time slots:', error);
+            document.getElementById('slots-loading').classList.add('hidden');
+            document.getElementById('slots-error').classList.remove('hidden');
+            document.getElementById('slots-error-message').textContent =
+                `Unable to load time slots: ${error.message}. Please try again.`;
+            state.loading = false;
+            updateUI();
+        }
+    }
+
+    async function retryLoadSlots() {
+        await showStep5();
+    }
+
+    function validateCurrentStep() {
+        state.bookingData.dogAge = document.getElementById('dog-age').value;
+
+        // Update contact information state for step 6 validation
+        if (state.currentStep >= 6) {
+            state.bookingData.serviceId = document.getElementById('service-select').value;
+            state.bookingData.customerName = document.getElementById('customer-name').value;
+            state.bookingData.customerPhone = document.getElementById('customer-phone').value;
+            state.bookingData.customerEmail = document.getElementById('customer-email').value;
+            state.bookingData.notes = document.getElementById('customer-notes').value;
+        }
+
+        switch(state.currentStep) {
+            case 1:
+                if (!state.bookingData.groomerId) {
+                    alert('Please select a groomer.');
+                    return false;
+                }
+                break;
+            case 2:
+                if (!state.bookingData.breedId || !state.bookingData.dogWeight) {
+                    alert('Please select a breed and enter your dog\'s weight.');
+                    return false;
+                }
+                if (!state.bookingData.dogName) {
+                    alert('Please enter your dog\'s name.');
+                    return false;
+                }
+                break;
+            case 3:
+                if (!state.bookingData.dogAge) {
+                    alert('Please enter your dog\'s age.');
+                    return false;
+                }
+                break;
+            case 4:
+                if (!state.bookingData.selectedDate) {
+                    alert('Please select a date.');
+                    return false;
+                }
+                break;
+            case 5:
+                if (!state.bookingData.selectedTime) {
+                    alert('Please select a time slot.');
+                    return false;
+                }
+                break;
+            case 6:
+                if (!state.bookingData.serviceId) {
+                    alert('Please select a service.');
+                    return false;
+                }
+                if (!state.bookingData.customerName || !state.bookingData.customerPhone || !state.bookingData.customerEmail) {
+                    alert('Please fill in your contact information.');
+                    return false;
+                }
+                return bookAppointment();
+        }
+        return true;
+    }
+
+    async function nextStep() {
+        if (!validateCurrentStep()) return;
+
+        if (state.currentStep < state.totalSteps) {
+            state.currentStep++;
+
+            if (state.currentStep === 4) await showStep4();
+            if (state.currentStep === 5) await showStep5();
+            if (state.currentStep === 6) await updateSummary();
+            updateUI();
+        }
+    }
+
+    function previousStep() {
+        if (state.currentStep > 1) {
+            state.currentStep--;
+            updateUI();
+        }
+    }
+
+    async function bookAppointment() {
+        state.loading = true;
+        updateUI();
+
+        try {
+            // Prepare request body with snake_case field names to match backend serializer
+            const requestBody = {
+                customer_name: state.bookingData.customerName,
+                customer_phone: state.bookingData.customerPhone,
+                customer_email: state.bookingData.customerEmail,
+                service_id: state.bookingData.serviceId,
+                breed_id: state.bookingData.breedId,
+                groomer_id: state.bookingData.groomId,
+                preferred_groomer_id: state.bookingData.groomId, // Initially same as groomer_id for preference
+                dog_name: state.bookingData.dogName,
+                dog_weight: state.bookingData.dogWeight,
+                dog_age: state.bookingData.dogAge,
+                selected_date: state.bookingData.selectedDate,
+                selected_time: state.bookingData.selectedTime,
+                notes: state.bookingData.notes || ''
+            };
+
+            // For override slots, the actual_groomer would be different
+            // For now, we'll let the backend handle the actual groomer assignment
+            // based on whether the slot is primary or override
+
+            const response = await fetch('/api/v1/booking/submit/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                state.confirmedAppointment = data.data.appointment;
+                state.loading = false;
+                state.currentStep++;
+                updateSummary();
+                renderConfirmation();
+                updateUI();
+                return true;
+            } else {
+                alert('Error: ' + (data.message || data.error || 'Failed to book appointment'));
+                state.loading = false;
+                updateUI();
+                return false;
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+            state.loading = false;
+            updateUI();
+            return false;
+        }
+    }
+
+    function renderConfirmation() {
+        if (state.confirmedAppointment) {
+            document.getElementById('confirmation-id').textContent = '#' + state.confirmedAppointment.id;
+            document.getElementById('confirmation-customer').textContent = state.bookingData.customerName || 'N/A';
+            document.getElementById('confirmation-phone').textContent = state.bookingData.customerPhone || 'N/A';
+            document.getElementById('confirmation-email').textContent = state.bookingData.customerEmail || 'N/A';
+
+            // Only show notes row if notes were provided
+            if (state.bookingData.notes) {
+                document.getElementById('confirmation-notes-row').style.display = 'flex';
+                document.getElementById('confirmation-notes').textContent = state.bookingData.notes;
+            } else {
+                document.getElementById('confirmation-notes-row').style.display = 'none';
+            }
+
+            document.getElementById('confirmation-preferred-groomer').textContent = state.bookingData.groomerName || '';
+
+            // Show actual groomer row if override slot was selected
+            if (state.isOverrideSlot) {
+                document.getElementById('confirmation-actual-groomer-row').style.display = 'flex';
+                document.getElementById('confirmation-actual-groomer').textContent = 'Another groomer (selected from override slots)';
+            } else {
+                document.getElementById('confirmation-actual-groomer-row').style.display = 'none';
+            }
+
+            document.getElementById('confirmation-dog').textContent = `${state.bookingData.dogName || ''} (${state.bookingData.breedName || ''})`;
+            document.getElementById('confirmation-datetime').textContent = `${state.bookingData.selectedDateDisplay || ''} at ${state.bookingData.selectedTime || ''}`;
+
+            const service = state.services.find(s => s.id === parseInt(state.bookingData.serviceId));
+            document.getElementById('confirmation-service').textContent = service?.name || '';
+
+            document.getElementById('confirmation-total').textContent = `$${state.confirmedAppointment.price_at_booking || 0}`;
+        }
+    }
+
+    // Public API
+    return {
+        init,
+        groomer,
+        onBreedChange,
+        updatePricePreview,
+        selectDate,
+        selectTime,
+        updateSummary,
+        nextStep,
+        previousStep,
+        retryLoadDays,
+        retryLoadSlots
+    };
+})();
+
+// Handle loading and errors appropriately in the modal context
+if (window.BookingModal && typeof window.BookingModal.init === 'function') {
+    window.BookingModal.init();
+}
+</script>
