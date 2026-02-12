@@ -1,5 +1,4 @@
 {% load static %}
-{% load tailwind_cli %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,7 @@
     <meta name="description" content="Shampooches - Professional Dog Grooming">
     <title>{% block title %}Shampooches{% endblock %}</title>
     <!-- <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}"> -->
-    {% tailwind_css %}
+    <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/htmx.org@1.9.10"></script>
 <style>
         body {

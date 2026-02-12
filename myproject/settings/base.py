@@ -189,7 +189,7 @@ REST_FRAMEWORK = {
 # Configure CSP headers to strictly define where scripts, styles, and media can load from.
 CSP_DEFAULT_SRC = ("'self'",)
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://jsdelivr.net", "https://unpkg.com")
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.tailwindcss.com")
 CSP_IMG_SRC = ("'self'", "data:", "https:")
 CSP_FONT_SRC = ("'self'", "data:", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
 CSP_CONNECT_SRC = ("'self'",)
