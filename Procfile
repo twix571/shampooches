@@ -1,1 +1,1 @@
-web: bash run.sh
+web: python -c "print('Starting deployment'); import os; os.system('python manage.py migrate --noinput'); os.system('python manage.py collectstatic --noinput'); os.system(f\"gunicorn myproject.wsgi:application --bind 0.0.0.0:{os.getenv('PORT', '8080')} --timeout 300 --workers 2 --access-logfile - --error-logfile - --log-level debug\")"
