@@ -100,7 +100,8 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns.append(path('__reload__/', include('django_browser_reload.urls')))
+    import django_browser_reload.urls
+    urlpatterns.append(path('__reload__/', include(django_browser_reload.urls)))
 
 # Django admin interface
 urlpatterns.append(path('admin/', admin.site.urls))
