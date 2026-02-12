@@ -8,7 +8,7 @@
 builder = "nixpacks"
 
 [start]
-command = "mkdir -p /data/media && python manage.py migrate --noinput && gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 --timeout 300 --workers 2"
+command = "/app/start.sh"
 
 # Environment variables (set these in Railway dashboard)
 # DEBUG=False
