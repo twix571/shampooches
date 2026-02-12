@@ -8,7 +8,7 @@
 builder = "nixpacks"
 
 # Railway will use the Procfile to determine the start command
-# The Procfile currently runs: python manage.py migrate && python manage.py collectstatic && gunicorn...
+# The Procfile currently runs: python manage.py collectstatic --noinput && gunicorn...
 
 # Environment variables (set these in Railway dashboard)
 # DEBUG=False
@@ -24,12 +24,7 @@ builder = "nixpacks"
 
 # Services
 [services.web]
-# Health checks - ensure app is ready before routing traffic
-[services.web.healthchecks]
-[services.web.healthchecks.liveness]
-path = "/health/"
-initialDelaySeconds = 15
-# Timeout increased to give database migrations time to complete
+# Health checks removed temporarily to debug container termination
 
 # PostgreSQL database (add in Railway dashboard)
 # Service type: PostgreSQL

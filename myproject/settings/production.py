@@ -38,7 +38,9 @@ DEBUG = False
 STATIC_URL = 'static/'
 STATIC_ROOT = Path('/app/staticfiles')
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Use simpler WhiteNoise storage backend for better reliability
+# This avoids manifest.json issues and doesn't require file hashing
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_IGNORE_MISSING_FILE = True
