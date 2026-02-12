@@ -70,14 +70,18 @@ def start_gunicorn():
     port = os.getenv('PORT', '8000')
     print(f"Binding to port: {port}")
     # Subprocess will inherit the environment including DATABASE_URL
-    subprocess.run([
+    result = subprocess.run([
         'gunicorn',
         'myproject.wsgi:application',
         '--bind', f'0.0.0.0:{port}',
         '--timeout', '300',
         '--workers', '2',
-        '--access-logfile', '-'
+        '--access-logfile', '-',
+        '--error-logfile', '-',
+        '--log-level', 'debug'
     ], check=True)
+    print(f"Gunicorn exited with return code: {result.returncode}")
+    return result.returncode
 
 if __name__ == '__main__':
     # Create media directory
@@ -85,9 +89,13 @@ if __name__ == '__main__':
     print("Starting Railway deployment...")
     
     if wait_for_db():
+        print("Database ready, proceeding with migrations...")
         run_migrations()
+        print("Migrations complete, proceeding with static files collection...")
         collect_static()
+        print("Static files collection complete, starting gunicorn...")
         start_gunicorn()
+        print("Gunicorn has exited")
     else:
         print("Database connection failed, exiting...")
         sys.exit(1)
