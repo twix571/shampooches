@@ -9,6 +9,7 @@ builder = "nixpacks"
 
 [start]
 command = "python wait_for_db.py"
+# Force rebuild to clear cached code
 
 # Environment variables (set these in Railway dashboard)
 # DEBUG=False
