@@ -8,7 +8,7 @@
 builder = "nixpacks"
 
 [start]
-command = "mkdir -p /data/media && DJANGO_SETTINGS_MODULE=myproject.settings.production python manage.py migrate --noinput && gunicorn myproject.wsgi:application --bind 0.0.0.0:8000"
+command = "mkdir -p /data/media && python wait_for_db.py && gunicorn myproject.wsgi:application --bind 0.0.0.0:8000"
 
 # Environment variables (set these in Railway dashboard)
 # DEBUG=False
