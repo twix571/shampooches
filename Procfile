@@ -1,1 +1,1 @@
-web: bash start.sh
+web: python wait_for_db.py
