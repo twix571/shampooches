@@ -9,6 +9,11 @@ import time
 import psycopg2
 import subprocess
 
+# Force Python to flush stdout immediately for proper logging in Railway
+sys.stdout.reconfigure(line_buffering=True)
+# Disable Django's stdout buffering
+os.environ['PYTHONUNBUFFERED'] = '1'
+
 def wait_for_db(max_retries=60, retry_interval=2):
     """Wait for database to be ready using direct PostgreSQL connection."""
     DATABASE_URL = os.getenv('DATABASE_URL')
