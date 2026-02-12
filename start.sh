@@ -35,4 +35,7 @@ python manage.py migrate --noinput
 
 # Start gunicorn
 echo "Starting gunicorn..."
-exec gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 --timeout 300 --workers 2 --access-logfile -
+# Use PORT environment variable if set (Railway sets this), default to 8000
+PORT=${PORT:-8000}
+echo "Binding to port: $PORT"
+exec gunicorn myproject.wsgi:application --bind 0.0.0.0:$PORT --timeout 300 --workers 2 --access-logfile -

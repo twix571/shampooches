@@ -50,11 +50,14 @@ def start_gunicorn():
     print("Starting gunicorn...")
     # Ensure DJANGO_SETTINGS_MODULE is set for gunicorn
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings.production')
+    # Use PORT environment variable if set (Railway sets this), default to 8000
+    port = os.getenv('PORT', '8000')
+    print(f"Binding to port: {port}")
     # Subprocess will inherit the environment including DATABASE_URL
     subprocess.run([
         'gunicorn',
         'myproject.wsgi:application',
-        '--bind', '0.0.0.0:8000',
+        '--bind', f'0.0.0.0:{port}',
         '--timeout', '300',
         '--workers', '2',
         '--access-logfile', '-'
