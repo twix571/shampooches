@@ -5,7 +5,7 @@
 
 # Build and run configuration
 [build]
-builder = "metal"
+builder = "nixpacks"
 
 # Railway will use the Procfile to determine the start command
 # The Procfile currently runs: python manage.py migrate && python manage.py collectstatic && gunicorn...
