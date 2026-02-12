@@ -46,6 +46,7 @@ WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_MAX_AGE = 31536000  # 1 year
 WHITENOISE_GZIP_ALL_EXTENSIONS = True
 WHITENOISE_GZIP_EXCLUDE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.woff', '.woff2']
+WHITENOISE_ROOT = Path('/app/staticfiles')
 
 ALLOWED_HOSTS_setting = os.getenv('ALLOWED_HOSTS', '').strip()
 if ALLOWED_HOSTS_setting:
