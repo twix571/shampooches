@@ -1,1 +1,1 @@
-web: mkdir -p /data/media && bash /app/start.sh
+web: mkdir -p /data/media && gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 --timeout 300 --workers 2
