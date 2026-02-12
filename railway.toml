@@ -25,13 +25,7 @@ builder = "nixpacks"
 # Services
 [services.web]
 # Railway automatically detects Python projects
-# Health check configuration
-[services.web.healthchecks]
-# Health check endpoint (Django has /health/ endpoint enabled)
-[services.web.healthchecks.liveness]
-path = "/health/"
-# Use Railway's PORT environment variable for health check
-initialDelaySeconds = 15
+# Health checks disabled temporarily for debugging
 
 # PostgreSQL database (add in Railway dashboard)
 # Service type: PostgreSQL
