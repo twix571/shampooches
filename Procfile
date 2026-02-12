@@ -1,1 +1,1 @@
-web: python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn myproject.wsgi:application --bind 0.0.0.0:$PORT --timeout 300 --workers 2 --access-logfile - --error-logfile - --log-level debug
+web: python wait_for_db.py

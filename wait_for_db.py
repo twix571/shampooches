@@ -7,7 +7,6 @@ import os
 import sys
 import time
 import psycopg2
-import subprocess
 
 # Force Python to flush stdout immediately for proper logging in Railway
 sys.stdout.reconfigure(line_buffering=True)
@@ -74,8 +73,9 @@ def start_gunicorn():
     # Use PORT environment variable if set (Railway sets this), default to 8000
     port = os.getenv('PORT', '8000')
     print(f"Binding to port: {port}")
-    # Subprocess will inherit the environment including DATABASE_URL
-    result = subprocess.run([
+    # Use os.exec to properly replace the current process with gunicorn
+    # This ensures proper signal handling and process management in Railway
+    args = [
         'gunicorn',
         'myproject.wsgi:application',
         '--bind', f'0.0.0.0:{port}',
@@ -83,10 +83,10 @@ def start_gunicorn():
         '--workers', '2',
         '--access-logfile', '-',
         '--error-logfile', '-',
-        '--log-level', 'debug'
-    ], check=True)
-    print(f"Gunicorn exited with return code: {result.returncode}")
-    return result.returncode
+        '--log-level', 'info'
+    ]
+    print(f"Executing: {' '.join(args)}")
+    os.execvp(args[0], args)
 
 if __name__ == '__main__':
     # Create media directory
@@ -100,7 +100,6 @@ if __name__ == '__main__':
         collect_static()
         print("Static files collection complete, starting gunicorn...")
         start_gunicorn()
-        print("Gunicorn has exited")
     else:
         print("Database connection failed, exiting...")
         sys.exit(1)
