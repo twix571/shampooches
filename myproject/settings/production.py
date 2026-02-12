@@ -52,8 +52,8 @@ ALLOWED_HOSTS_setting = os.getenv('ALLOWED_HOSTS', '').strip()
 if ALLOWED_HOSTS_setting:
     ALLOWED_HOSTS = ALLOWED_HOSTS_setting.split(',')
 else:
-    # Fallback to allow all Railway domains
-    ALLOWED_HOSTS = ['*']
+    # Fallback for Railway - include health check hostname
+    ALLOWED_HOSTS = ['*', 'healthcheck.railway.app']
 
 # Database (Production - Railway PostgreSQL via DATABASE_URL)
 # Railway automatically provides DATABASE_URL environment variable
