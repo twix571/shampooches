@@ -91,23 +91,19 @@ urlpatterns = [
 
     # Development/Test URLs
     path('auth-test/', views.auth_test, name='auth_test'),
-    
+
     # API URLs
     path('api/v1/', include('mainapp.api_v1_urls')),
     path('api/', include(router.urls)),
-    
+
     # Development tools (only in DEBUG mode)
 ]
+
 if settings.DEBUG:
     urlpatterns.append(path('__reload__/', include('django_browser_reload.urls')))
 
 # Django admin interface
 urlpatterns.append(path('admin/', admin.site.urls))
-    
-    # Admin interface (non-obvious URL for security) - disabled for development
-    # Uncomment in production and set DJANGO_ADMIN_URL environment variable
-    # path(os.getenv('DJANGO_ADMIN_URL', 'django-panel-secret-8f3k2Lm9/)'), admin.site.urls),
-]
 
 # ============================================================================
 # Debug toolbar URLs (DEBUG mode only)
