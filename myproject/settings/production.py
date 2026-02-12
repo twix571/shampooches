@@ -32,12 +32,18 @@ EMAIL_SUBJECT_PREFIX = '[Shampooches] '
 # Anymail integration
 INSTALLED_APPS += ['anymail']
 
+# Remove development-only apps
+INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django_browser_reload']
+
 DEBUG = False
 
 # WhiteNoise for static file serving in production
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ] + MIDDLEWARE
+
+# Remove development-only middleware
+MIDDLEWARE = [m for m in MIDDLEWARE if 'django_browser_reload' not in m]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
