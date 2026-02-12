@@ -97,16 +97,17 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'json',
+            'level': 'INFO',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': 'INFO',
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'INFO',
             'propagate': False,
         },
         'django.request': {
