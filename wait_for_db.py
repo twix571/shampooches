@@ -6,22 +6,20 @@ This script retries database connections until successful or timeout.
 import os
 import sys
 import time
-import django
+import psycopg2
 
-# Set up Django settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings.production')
-django.setup()
-
-from django.db import connection
-from django.core.management import call_command
-
-def wait_for_db(max_retries=30, retry_interval=2):
-    """Wait for database to be ready."""
+def wait_for_db(max_retries=60, retry_interval=2):
+    """Wait for database to be ready using direct PostgreSQL connection."""
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    if not DATABASE_URL:
+        print("Error: DATABASE_URL environment variable not set")
+        return False
+    
     for attempt in range(max_retries):
         try:
-            # Test database connection
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
+            # Test database connection directly with psycopg2
+            conn = psycopg2.connect(DATABASE_URL)
+            conn.close()
             print(f"Database is ready after {attempt + 1} attempt(s)")
             return True
         except Exception as e:
@@ -34,6 +32,13 @@ def wait_for_db(max_retries=30, retry_interval=2):
 if __name__ == '__main__':
     if wait_for_db():
         print("Running migrations...")
+        # Set up Django settings AFTER database is ready
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings.production')
+        
+        import django
+        django.setup()
+        
+        from django.core.management import call_command
         call_command('migrate', '--noinput')
         print("Migrations completed successfully")
         sys.exit(0)
