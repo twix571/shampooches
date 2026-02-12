@@ -7,9 +7,8 @@
 [build]
 builder = "nixpacks"
 
-[start]
-command = "python wait_for_db.py"
-# Force rebuild (v3) to clear cached code
+# Railway will use the Procfile to determine the start command
+# The Procfile currently runs: python manage.py migrate && python manage.py collectstatic && gunicorn...
 
 # Environment variables (set these in Railway dashboard)
 # DEBUG=False
@@ -25,7 +24,13 @@ command = "python wait_for_db.py"
 # Services
 [services.web]
 # Railway automatically detects Python projects
-# No additional config needed
+# Health check configuration
+[services.web.healthchecks]
+# Health check endpoint (Django has /health/ endpoint enabled)
+[services.web.healthchecks.liveness]
+path = "/health/"
+port = $PORT
+initialDelaySeconds = 10
 
 # PostgreSQL database (add in Railway dashboard)
 # Service type: PostgreSQL
