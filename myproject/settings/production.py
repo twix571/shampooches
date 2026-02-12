@@ -52,6 +52,7 @@ if DATABASE_URL:
             default=DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
+            options={'connect_timeout': 60},
         )
     }
 
