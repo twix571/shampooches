@@ -46,12 +46,6 @@ INSTALLED_APPS = [
     'csp',
 ]
 
-# Development-only apps
-if DEBUG:
-    INSTALLED_APPS += [
-        'debug_toolbar',
-    ]
-
 AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
@@ -69,10 +63,6 @@ MIDDLEWARE = [
     'mainapp.middleware.QueryLoggingMiddleware',
     'mainapp.middleware.ActionLoggingMiddleware',
 ]
-
-# Development-only middleware
-if DEBUG:
-    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'myproject.urls'
 
@@ -208,14 +198,6 @@ CSP_MEDIA_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
 CSP_BASE_URI = ("'self'",)
 CSP_FRAME_SRC = ("'none'",)
-
-# Django Debug Toolbar Configuration
-# Only active in DEBUG mode, provides detailed request/response/query inspection
-INTERNAL_IPS = ['127.0.0.1', 'localhost']
-DEBUG_TOOLBAR_CONFIG = {
-    'SHOW_TOOLBAR_CALLBACK': lambda request: True,
-    'IS_RUNNING_TESTS': False,  # Allow debug toolbar during tests
-}
 
 # Logging Configuration
 # Logging configuration is set in environment-specific files:
