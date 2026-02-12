@@ -30,13 +30,7 @@ EMAIL_HOST_PASSWORD = None
 # Production-specific email settings
 EMAIL_SUBJECT_PREFIX = '[Shampooches] '
 
-# Remove development-only apps
-INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django_browser_reload' and app != 'debug_toolbar']
-
 DEBUG = False
-
-# Remove development-only middleware
-MIDDLEWARE = [m for m in MIDDLEWARE if 'django_browser_reload' not in m and 'debug_toolbar' not in m]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

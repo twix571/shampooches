@@ -30,7 +30,6 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 # Application definition
 
 INSTALLED_APPS = [
-    'django_browser_reload',
     'django_cleanup',
     'rest_framework',
     'django.contrib.admin',
@@ -41,12 +40,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_tailwind_cli',
     'anymail',
-    'debug_toolbar',
     'whitenoise.runserver_nostatic',
     'users',
     'mainapp',
     'csp',
 ]
+
+# Development-only apps
+if DEBUG:
+    INSTALLED_APPS += [
+        'django_browser_reload',
+        'debug_toolbar',
+    ]
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -56,17 +61,20 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'csp.middleware.CSPMiddleware',
-    'django_browser_reload.middleware.BrowserReloadMiddleware',
     'mainapp.middleware.SecurityHeadersMiddleware',
     'mainapp.middleware.ExceptionHandlingMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'mainapp.middleware.QueryLoggingMiddleware',
     'mainapp.middleware.ActionLoggingMiddleware',
 ]
+
+# Development-only middleware
+if DEBUG:
+    MIDDLEWARE.insert(4, 'django_browser_reload.middleware.BrowserReloadMiddleware')
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'myproject.urls'
 
