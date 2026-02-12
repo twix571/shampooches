@@ -1,1 +1,1 @@
-web: mkdir -p /app/staticfiles && python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 --log-level info --access-logfile - --error-logfile - myproject.wsgi:application
+web: mkdir -p /app/staticfiles && python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 --log-level debug --access-logfile - --error-logfile - myproject.minimal_wsgi:application
