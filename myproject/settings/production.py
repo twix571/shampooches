@@ -91,6 +91,19 @@ SECURE_HSTS_PRELOAD = True
 # Configure Django logging to send errors to console
 # Sentry integration is configured separately below
 
+# Simplify middleware for production to avoid blocking issues
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'mainapp.middleware.ExceptionHandlingMiddleware',
+]
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -99,20 +112,21 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
-        'json': {
-            'format': '{"levelname": "%(levelname)s", "asctime": "%(asctime)s", "module": "%(module)s", "message": "%(message)s"}',
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
         },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'json',
-            'level': 'INFO',
+            'formatter': 'verbose',
+            'level': 'DEBUG',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': 'DEBUG',
     },
     'loggers': {
         'django': {
@@ -122,12 +136,12 @@ LOGGING = {
         },
         'django.request': {
             'handlers': ['console'],
-            'level': 'ERROR',
+            'level': 'WARN',
             'propagate': False,
         },
         'mainapp': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False,
         },
     },
