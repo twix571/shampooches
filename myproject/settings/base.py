@@ -24,6 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # The fallback value below is for development only and must never be used in production
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-only-must-change-in-production')
 
+# DEBUG defaults to False for security; set to True in development environment
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+
 # Application definition
 
 INSTALLED_APPS = [

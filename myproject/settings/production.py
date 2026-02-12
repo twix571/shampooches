@@ -2,6 +2,7 @@
 Production Django settings for myproject project.
 """
 import logging
+from pathlib import Path
 import dj_database_url
 
 from .base import *
@@ -60,12 +61,13 @@ if DATABASE_URL:
         )
     }
 
-# Media files - Use local directory for now
-# For persistent storage, add a Railway volume mounted at /data and set MEDIA_ROOT=/data/media
-MEDIA_ROOT = BASE_DIR / 'media'
+# Media files - Use Railway volume for persistent storage
+# Volume should be mounted at /data in Railway dashboard
+MEDIA_ROOT = Path('/data/media')
 MEDIA_URL = 'media/'
 
 # Security Settings (Production)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -162,6 +164,5 @@ CSP_OBJECT_SRC = ("'none'",)
 CSP_REPORT_URI = os.getenv('CSP_REPORT_URI',)
 CSP_ENFORCE = True
 
-# Rename Admin URL
-# Change the default admin/ URL path to something unpredictable to reduce brute-force attempts.
-# This is handled in myproject/urls.py - ensure it's renamed in production.
+# Security Note: Consider renaming the admin URL from /admin/ to something unpredictable
+# to reduce brute-force attacks. This can be done in myproject/urls.py.

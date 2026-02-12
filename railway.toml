@@ -8,14 +8,13 @@
 builder = "nixpacks"
 
 [start]
-command = "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn myproject.wsgi:application --bind 0.0.0.0:8000"
+command = "DJANGO_SETTINGS_MODULE=myproject.settings.production python manage.py collectstatic --noinput && DJANGO_SETTINGS_MODULE=myproject.settings.production python manage.py migrate --noinput && gunicorn myproject.wsgi:application --bind 0.0.0.0:8000"
 
 # Environment variables (set these in Railway dashboard)
 # DEBUG=False
 # SECRET_KEY=<generate secure key>
 # ALLOWED_HOSTS=<your-railway-domain>.railway.app
-# DJANGO_SETTINGS_MODULE=myproject.settings.production
-# MEDIA_ROOT=/data/media  (optional: set this after adding volume)
+# DJANGO_SETTINGS_MODULE=myproject.settings.production (optional: command sets this)
 
 # Volume mounts (add in Railway dashboard)
 # - Go to web service → Settings → Volumes
