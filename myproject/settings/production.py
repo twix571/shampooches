@@ -60,10 +60,9 @@ if DATABASE_URL:
         )
     }
 
-# Media files - Railway Volumes for persistent storage
-# Railway provides persistent storage at /data by default
-# Ensure a volume is mounted at /data in Railway
-MEDIA_ROOT = Path('/data/media')
+# Media files - Use local directory for now
+# For persistent storage, add a Railway volume mounted at /data and set MEDIA_ROOT=/data/media
+MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = 'media/'
 
 # Security Settings (Production)
