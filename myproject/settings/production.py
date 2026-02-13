@@ -52,6 +52,9 @@ WHITENOISE_GZIP_EXCLUDE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', 
 
 # Explicitly set WHITENOISE_ROOT to match where collectstatic puts files
 # This ensures WhiteNoise serves files from the correct location
+# CRITICAL: DO NOT REMOVE this setting! Removing it causes 404 errors for all static files
+# See commit e3c90ea (Feb 13, 2026) where removing WHITENOISE_ROOT broke static file serving
+# and caused modal.js and favicon.svg to return 404 errors on Railway.
 WHITENOISE_ROOT = BASE_DIR / 'staticfiles'
 
 ALLOWED_HOSTS_setting = os.getenv('ALLOWED_HOSTS', '').strip()

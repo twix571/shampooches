@@ -431,6 +431,16 @@ def react_to_state_change(sender, instance, created, **kwargs):
 - Use `start.sh` script for production startup
 - Gunicorn with 2 workers, 300s timeout
 
+### Static Files Configuration (CRITICAL)
+**NEVER remove the following settings from `myproject/settings/production.py`:**
+- `WHITENOISE_ROOT = BASE_DIR / 'staticfiles'` - Required for WhiteNoise to serve static files
+- `STATICFILES_DIRS = [BASE_DIR / 'static']` in `base.py` - Must be set regardless of DEBUG mode (remove `if DEBUG:` wrapper)
+
+**Historical Issue (Feb 13, 2026):**
+Removing `WHITENOISE_ROOT` caused all static files (modal.js, favicon.svg, etc.) to return 404 errors on Railway.
+The `STATICFILES_DIRS` being wrapped in `if DEBUG:` caused `collectstatic` to fail on Railway, leaving the staticfiles directory empty.
+**Lesson learned:** WhiteNoise needs explicit paths and source directories must always be discoverable.
+
 ### Startup Sequence (Railway)
 ```
 1. wait_for_db.py → Wait for PostgreSQL connection
