@@ -24,7 +24,8 @@ ENV/
 *~
 
 # Django
-static/
+# Keep static/ in version control as it contains source JavaScript files
+# Only ignore compiled outputs and user-generated content
 media/
 staticfiles/
 locale/
