@@ -72,13 +72,13 @@ def collect_static():
     log("Collecting static files...")
     # Set up Django settings
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings.production')
-    
+
     import django
     django.setup()
-    
+
     from django.core.management import call_command
     try:
-        call_command('collectstatic', '--noinput', '--clear')
+        call_command('collectstatic', '--noinput')
         log("Static files collected successfully")
     except Exception as e:
         log(f"Warning: Static file collection failed: {e}")
