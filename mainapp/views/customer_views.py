@@ -2,13 +2,16 @@
 
 from decimal import Decimal
 
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.messages import add_message, constants
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from mainapp.models import Appointment, Breed, Dog, DogDeletionRequest
+from mainapp.models import Appointment, Breed, Dog, DogDeletionRequest, Customer
+from mainapp.forms import DogForm
 
 
 @login_required
@@ -49,7 +52,7 @@ def customer_profile(request: HttpRequest) -> HttpResponse:
         has_changes = False
 
         if email and email != user.email:
-            User = __import__('django.contrib.auth', fromlist=['get_user_model']).get_user_model()
+            User = get_user_model()
             if User.objects.filter(email=email).exclude(id=user.id).exists():
                 errors.append('Email already registered')
             else:
@@ -67,13 +70,15 @@ def customer_profile(request: HttpRequest) -> HttpResponse:
             has_changes = True
 
         if password:
-            if len(password) < 8:
-                errors.append('Password must be at least 8 characters')
-            elif password != password_confirm:
+            if password != password_confirm:
                 errors.append('Passwords do not match')
             else:
-                user.set_password(password)
-                has_changes = True
+                try:
+                    validate_password(password, user)
+                    user.set_password(password)
+                    has_changes = True
+                except ValidationError as e:
+                    errors.extend(e.messages)
 
         if errors:
             for error in errors:
@@ -81,8 +86,8 @@ def customer_profile(request: HttpRequest) -> HttpResponse:
             return render(request, 'mainapp/customer_profile.html', {
                 'user': user,
                 'customer_appointments': Appointment.objects.filter(
-                    customer__email=user.email
-                ).order_by('-date', '-time'),
+                    customer__user=user
+                ).select_related('service').order_by('-date', '-time'),
             })
         elif has_changes:
             user.save()
@@ -94,8 +99,8 @@ def customer_profile(request: HttpRequest) -> HttpResponse:
 
     try:
         customer_appointments = Appointment.objects.filter(
-            customer__email=user.email
-        ).order_by('-date', '-time')
+            customer__user=user
+        ).select_related('service').order_by('-date', '-time')
 
         breeds = Breed.objects.filter(is_active=True).order_by('name')
 
@@ -162,48 +167,17 @@ def add_dog(request: HttpRequest) -> HttpResponse:
         return redirect('customer_landing')
 
     if request.method == 'POST':
-        name = request.POST.get('dog_name')
-        breed_id = request.POST.get('breed_id')
-        weight = request.POST.get('weight')
-        age = request.POST.get('dog_age')
-        notes = request.POST.get('notes')
-
-        errors = []
-
-        if not name:
-            errors.append('Dog name is required')
-
-        if breed_id and breed_id != '':
-            try:
-                breed = Breed.objects.get(id=int(breed_id))
-            except Breed.DoesNotExist:
-                errors.append('Invalid breed selected')
-        else:
-            breed = None
-
-        if weight:
-            try:
-                weight = Decimal(weight)
-                if weight <= 0:
-                    errors.append('Weight must be greater than 0')
-            except:
-                errors.append('Invalid weight value')
-        else:
-            weight = None
-
-        if errors:
-            for error in errors:
-                add_message(request, constants.ERROR, error)
-        else:
-            Dog.objects.create(
-                name=name,
-                owner=request.user,
-                breed=breed,
-                weight=weight,
-                age=age,
-                notes=notes
-            )
+        form = DogForm(request.POST)
+        if form.is_valid():
+            dog = form.save(commit=False)
+            dog.owner = request.user
+            dog.save()
             add_message(request, constants.SUCCESS, 'Dog profile added successfully!')
+            return redirect('customer_profile')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    add_message(request, constants.ERROR, error)
 
     return redirect('customer_profile')
 
@@ -230,46 +204,15 @@ def edit_dog(request: HttpRequest, dog_id: int) -> HttpResponse:
         return redirect('customer_profile')
 
     if request.method == 'POST':
-        name = request.POST.get('dog_name')
-        breed_id = request.POST.get('breed_id')
-        weight = request.POST.get('weight')
-        age = request.POST.get('dog_age')
-        notes = request.POST.get('notes')
-
-        errors = []
-
-        if not name:
-            errors.append('Dog name is required')
-
-        if breed_id and breed_id != '':
-            try:
-                breed = Breed.objects.get(id=int(breed_id))
-            except Breed.DoesNotExist:
-                errors.append('Invalid breed selected')
-        else:
-            breed = None
-
-        if weight:
-            try:
-                weight = Decimal(weight)
-                if weight <= 0:
-                    errors.append('Weight must be greater than 0')
-            except:
-                errors.append('Invalid weight value')
-        else:
-            weight = None
-
-        if errors:
-            for error in errors:
-                add_message(request, constants.ERROR, error)
-        else:
-            dog.name = name
-            dog.breed = breed
-            dog.weight = weight
-            dog.age = age
-            dog.notes = notes
-            dog.save()
+        form = DogForm(request.POST, instance=dog)
+        if form.is_valid():
+            form.save()
             add_message(request, constants.SUCCESS, 'Dog profile updated successfully!')
+            return redirect('customer_profile')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    add_message(request, constants.ERROR, error)
 
     return redirect('customer_profile')
 

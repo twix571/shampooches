@@ -43,7 +43,8 @@ myproject/ (Django config, settings.py, urls.py, settings/production.py, custom 
 mainapp/ (main app with models, views, serializers, admin, services, apiviews, viewsets)
 mainapp/templates/mainapp/ (HTML templates: base.html, customer_landing.html, admin_landing.html, groomer_landing.html, booking_modal.html, schedule_modal.html, login.html, pricing/ directory)
   pricing/ (pricing templates: pricing_management.html, breed_cloning_wizard_modal.html, pricing_preview_modal.html, weight_pricing_modal.html, weight_range_templates_modal.html)
-static/ (CSS: tailwind.css, js/modal-utils.js)
+static/ (js/modal.js, js/schedule-modal.js, favicon.svg)
+mainapp/static/ (js/weight-pricing-modal.js)
 media/ (user uploads: groomer_images/) - dev only
 manage.py (Django CLI entry point)
 railway.toml (Railway deployment configuration)

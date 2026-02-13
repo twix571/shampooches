@@ -76,29 +76,29 @@ def send_appointment_notification_email(sender, instance, created, **kwargs):
 
     # Handle new pending appointments
     if created and new_status == 'pending':
-        _send_email(
+        transaction.on_commit(lambda: _send_email(
             appointment=instance,
             site_config=site_config,
             email_type='confirmation'
-        )
+        ))
         return
 
     # Handle status transitions
     if old_status and old_status != new_status:
         # Pending -> Confirmed
         if old_status == 'pending' and new_status == 'confirmed':
-            _send_email(
+            transaction.on_commit(lambda: _send_email(
                 appointment=instance,
                 site_config=site_config,
                 email_type='confirmed'
-            )
+            ))
         # Any status -> Cancelled
         elif new_status == 'cancelled':
-            _send_email(
+            transaction.on_commit(lambda: _send_email(
                 appointment=instance,
                 site_config=site_config,
                 email_type='cancelled'
-            )
+            ))
 
 
 def _send_email(appointment, site_config, email_type):

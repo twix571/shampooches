@@ -89,14 +89,9 @@ urlpatterns = [
     path('htmx/groomer-options/', views.render_groomer_options, name='htmx_groomer_options'),
     path('htmx/time-slots/', views.render_time_slots, name='htmx_time_slots'),
 
-    # Development/Test URLs
-    path('auth-test/', views.auth_test, name='auth_test'),
-
     # API URLs
     path('api/v1/', include('mainapp.api_v1_urls')),
     path('api/', include(router.urls)),
-
-    # Development tools (only in DEBUG mode)
 ]
 
 # Django admin interface

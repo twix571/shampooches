@@ -29,6 +29,13 @@ ALLOWED_HOSTS=your-project-name.railway.app
 DJANGO_SETTINGS_MODULE=myproject.settings.production
 ```
 
+**Recommended (for automatic superuser creation):**
+```
+SUPERUSER_USERNAME=admin
+SUPERUSER_PASSWORD=<your-secure-password>
+SUPERUSER_EMAIL=admin@shampooches.com
+```
+
 **Optional (for email functionality):**
 ```
 EMAIL_BACKEND=anymail.backends.sendgrid.EmailBackend
@@ -99,8 +106,18 @@ git push origin master  # or your branch name
    - Run migrations
    - Start the Gunicorn server
 
-### 7. Create Superuser (Optional - for admin access)
-After successful deployment, create admin superuser:
+### 7. Configure Superuser (for admin access)
+
+**Option A: Automatic Creation (Recommended)**
+Add these environment variables in Railway web service → Settings → Variables:
+- `SUPERUSER_USERNAME=admin` (or your preferred username)
+- `SUPERUSER_PASSWORD=<your-secure-password>` (must be set)
+- `SUPERUSER_EMAIL=admin@shampooches.com` (optional)
+
+The superuser will be automatically created during each deployment if it doesn't exist, or the password will be updated if it does exist.
+
+**Option B: Manual Creation**
+After successful deployment, create admin superuser manually:
 1. Go to web service → Console
 2. Click "New Console" → "Web Service"
 3. Run:

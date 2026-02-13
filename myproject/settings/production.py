@@ -4,6 +4,7 @@ Production Django settings for myproject project.
 import logging
 from pathlib import Path
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 from .base import *
 
@@ -54,8 +55,9 @@ ALLOWED_HOSTS_setting = os.getenv('ALLOWED_HOSTS', '').strip()
 if ALLOWED_HOSTS_setting:
     ALLOWED_HOSTS = ALLOWED_HOSTS_setting.split(',')
 else:
-    # Fallback for Railway - include health check hostname
-    ALLOWED_HOSTS = ['*', 'healthcheck.railway.app']
+    # Fail-fast if ALLOWED_HOSTS is not configured in production
+    # This prevents host header injection attacks
+    raise ImproperlyConfigured("ALLOWED_HOSTS environment variable must be set in production")
 
 # Database (Production - Railway PostgreSQL via DATABASE_URL)
 # Railway automatically provides DATABASE_URL environment variable
@@ -123,27 +125,27 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG',
+        'level': 'WARNING',
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'WARNING',
             'propagate': False,
         },
         'django.request': {
             'handlers': ['console'],
-            'level': 'WARN',
+            'level': 'WARNING',
             'propagate': False,
         },
         'mainapp': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
     },
@@ -172,22 +174,22 @@ if SENTRY_DSN:
 
 # Content Security Policy (CSP)
 # Implement CSP headers to strictly define where scripts, styles, and media can load from.
-# Override with more restrictive settings for production - no 'unsafe-inline' or 'unsafe-eval'
+# Enforce stricter settings for production - no 'unsafe-inline' or 'unsafe-eval'
 
-# CSP_DEFAULT_SRC = ("'self'",)
-# CSP_SCRIPT_SRC = ("'self'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://jsdelivr.net", "https://unpkg.com")
-# CSP_STYLE_SRC = ("'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
-# CSP_IMG_SRC = ("'self'", "data:", "https:")
-# CSP_FONT_SRC = ("'self'", "data:", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
-# CSP_CONNECT_SRC = ("'self'",)
-# CSP_FORM_ACTION = ("'self'",)
-# CSP_MEDIA_SRC = ("'self'",)
-# CSP_FRAME_ANCESTORS = ("'none'",)
-# CSP_BASE_URI = ("'self'",)
-# CSP_FRAME_SRC = ("'none'",)
-# CSP_OBJECT_SRC = ("'none'",)
-# CSP_REPORT_URI = os.getenv('CSP_REPORT_URI',)
-# CSP_ENFORCE = True
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://jsdelivr.net", "https://unpkg.com")
+CSP_STYLE_SRC = ("'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "data:", "https://fonts.googleapis.com", "https://fonts.gstatic.com")
+CSP_CONNECT_SRC = ("'self'",)
+CSP_FORM_ACTION = ("'self'",)
+CSP_MEDIA_SRC = ("'self'",)
+CSP_FRAME_ANCESTORS = ("'none'",)
+CSP_BASE_URI = ("'self'",)
+CSP_FRAME_SRC = ("'none'",)
+CSP_OBJECT_SRC = ("'none'",)
+CSP_REPORT_URI = os.getenv('CSP_REPORT_URI',)
+CSP_ENFORCE = True
 
 # Security Note: Consider renaming the admin URL from /admin/ to something unpredictable
 # to reduce brute-force attacks. This can be done in myproject/urls.py.

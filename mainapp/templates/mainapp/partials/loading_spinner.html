@@ -1,7 +1,0 @@
-{% load static %}
-
-<!-- Loading Spinner Component -->
-<div class="flex justify-center items-center py-12">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    <span class="ml-2 text-gray-600 {% if show_text %}block{% else %}hidden{% endif %}">{{ text|default:"Loading..." }}</span>
-</div>

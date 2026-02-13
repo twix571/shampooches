@@ -44,13 +44,28 @@ def run_migrations():
     log("Running database migrations...")
     # Set up Django settings
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings.production')
-    
+
     import django
     django.setup()
-    
+
     from django.core.management import call_command
     call_command('migrate', '--noinput')
     log("Migrations completed successfully")
+
+def create_superuser_if_not_exists():
+    """Create superuser if environment variables are set."""
+    log("Checking for superuser creation...")
+    # Set up Django settings
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings.production')
+
+    import django
+    django.setup()
+
+    from django.core.management import call_command
+    try:
+        call_command('create_superuser_if_not_exists')
+    except Exception as e:
+        log(f"Note: {e}")
 
 def collect_static():
     """Collect static files."""
@@ -104,7 +119,9 @@ if __name__ == '__main__':
     if wait_for_db():
         log("Database ready, proceeding with migrations...")
         run_migrations()
-        log("Migrations complete, proceeding with static files collection...")
+        log("Migrations complete, checking superuser...")
+        create_superuser_if_not_exists()
+        log("Superuser check complete, proceeding with static files collection...")
         collect_static()
         log("Static files collection complete, starting gunicorn...")
         start_gunicorn()
