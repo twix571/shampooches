@@ -123,10 +123,10 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Only set STATICFILES_DIRS in development (for serving static files locally)
-# In production, static files are collected via collectstatic
-if DEBUG:
-    STATICFILES_DIRS = [BASE_DIR / 'static']
+# Always include project static files directory for collectstatic
+# In development, Django serves directly from here (with DEBUG=True)
+# In production, collectstatic copies from here to STATIC_ROOT, then WhiteNoise serves
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Media files (User uploaded content)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/#media-files
