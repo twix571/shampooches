@@ -279,17 +279,30 @@ class Service(models.Model):
 
 
 class Customer(models.Model):
-    """Model representing a salon customer."""
+    """Model representing a salon customer.
 
+    This model represents the business entity for a customer. It can be linked
+    to a User account (for registered customers) or exist independently (for guest bookings).
+    """
+
+    user = models.OneToOneField(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customer_profile',
+        db_index=True,
+        help_text="Linked User account (null for guest bookings)"
+    )
     name = models.CharField(
         max_length=100,
         db_index=True,
-        help_text="Customer's full name"
+        help_text="Customer's full name (auto-populated from User if linked)"
     )
     email = models.EmailField(
         unique=True,
         db_index=True,
-        help_text="Customer's email address"
+        help_text="Customer's email address (auto-populated from User if linked)"
     )
     phone = models.CharField(
         max_length=20,
@@ -297,7 +310,7 @@ class Customer(models.Model):
             regex=r'^\+?1?\d{9,15}$',
             message='Phone number must be entered in the format: +1234567890 or 1234567890. Up to 15 digits allowed.'
         )],
-        help_text="Customer's phone number"
+        help_text="Customer's phone number (auto-populated from User if linked)"
     )
     address = models.TextField(
         blank=True,
@@ -313,7 +326,23 @@ class Customer(models.Model):
         verbose_name_plural = 'Customers'
 
     def __str__(self):
-        return f"{self.name} ({self.phone})"
+        if self.user:
+            return f"{self.name} ({self.phone}) [Account: {self.user.username}]"
+        return f"{self.name} ({self.phone}) [Guest]"
+
+    def save(self, *args, **kwargs):
+        """Auto-populate fields from linked User when saving."""
+        if self.user:
+            # Populate name from User if not set
+            if not self.name:
+                self.name = self.user.get_full_name() or self.user.username
+            # Populate email from User if not set
+            if not self.email:
+                self.email = self.user.email
+            # Populate phone from User if not set
+            if not self.phone:
+                self.phone = self.user.phone or ''
+        super().save(*args, **kwargs)
 
 
 class AppointmentManager(models.Manager):

@@ -131,7 +131,7 @@ def create_booking(
 
             # Get or create/update customer
             customer = _get_or_create_customer(
-                customer_email, customer_name, customer_phone
+                customer_email, customer_name, customer_phone, user
             )
 
             # Get preferred groomer if provided
@@ -227,7 +227,8 @@ def _validate_booking_input(
 def _get_or_create_customer(
     email: str,
     name: str,
-    phone: str
+    phone: str,
+    user=None
 ) -> Customer:
     """Get or create a customer.
 
@@ -235,6 +236,7 @@ def _get_or_create_customer(
         email: Customer's email
         name: Customer's name
         phone: Customer's phone
+        user: Optional User object (for registered customers)
 
     Returns:
         Customer: The customer object
@@ -243,6 +245,18 @@ def _get_or_create_customer(
         DatabaseError: If database operation fails
     """
     try:
+        # If a User is provided and has a Customer profile, use it
+        if user and hasattr(user, 'customer_profile') and user.customer_profile:
+            customer = user.customer_profile
+            # Update existing customer profile with latest info
+            if customer.name != name or customer.phone != phone:
+                customer.name = name
+                customer.phone = phone
+                customer.save()
+                logger.info(f'Updated existing customer profile for user {user.username}')
+            return customer
+
+        # Otherwise, get or create by email (for guest bookings or legacy customers)
         customer, created = Customer.objects.get_or_create(
             email=email,
             defaults={

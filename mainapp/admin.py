@@ -61,12 +61,17 @@ class ServiceAdmin(admin.ModelAdmin):
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
     """Admin interface for Customer model."""
-    list_display = ['name', 'email', 'phone', 'appointment_count', 'created_at']
-    search_fields = ['name', 'email', 'phone']
+    list_display = ['name', 'email', 'phone', 'user_status', 'appointment_count', 'created_at']
+    list_filter = ['user__user_type', 'created_at']
+    search_fields = ['name', 'email', 'phone', 'user__username']
     ordering = ['name']
     readonly_fields = ['created_at', 'updated_at']
-    
+    autocomplete_fields = ['user']
+
     fieldsets = (
+        ('Linked Account', {
+            'fields': ('user',)
+        }),
         ('Customer Information', {
             'fields': ('name', 'email', 'phone', 'address')
         }),
@@ -75,6 +80,13 @@ class CustomerAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def user_status(self, obj):
+        """Display whether customer has an account."""
+        if obj.user:
+            return obj.user.username
+        return 'Guest'
+    user_status.short_description = 'Account'
 
     def appointment_count(self, obj):
         """Count number of appointments for this customer."""
