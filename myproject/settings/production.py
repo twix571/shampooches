@@ -50,6 +50,10 @@ WHITENOISE_MAX_AGE = 31536000  # 1 year
 WHITENOISE_GZIP_ALL_EXTENSIONS = True
 WHITENOISE_GZIP_EXCLUDE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.woff', '.woff2']
 
+# Explicitly set WHITENOISE_ROOT to match where collectstatic puts files
+# This ensures WhiteNoise serves files from the correct location
+WHITENOISE_ROOT = BASE_DIR / 'staticfiles'
+
 ALLOWED_HOSTS_setting = os.getenv('ALLOWED_HOSTS', '').strip()
 if ALLOWED_HOSTS_setting:
     ALLOWED_HOSTS = ALLOWED_HOSTS_setting.split(',')
