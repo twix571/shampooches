@@ -236,12 +236,6 @@ def _calculate_customer_metrics(today: date, start_of_month: date) -> Dict[str, 
     # Customer retention rate calculation
     # A customer is considered "retained" if they had an appointment in a previous month
     # and another appointment in the current month
-    current_month_appointments = Appointment.objects.filter(
-        date__gte=start_of_month,
-        date__lte=today,
-        status__in=['confirmed', 'completed']
-    ).distinct('customer')
-
     # Get customers who had appointments before this month
     previous_month = start_of_month - timedelta(days=1)
     start_of_previous_month = previous_month.replace(day=1)
@@ -252,7 +246,10 @@ def _calculate_customer_metrics(today: date, start_of_month: date) -> Dict[str, 
     ).values_list('customer_id', flat=True).distinct()
 
     # Count how many of those had appointments this month
-    retained_customers = current_month_appointments.filter(
+    retained_customers = Appointment.objects.filter(
+        date__gte=start_of_month,
+        date__lte=today,
+        status__in=['confirmed', 'completed'],
         customer_id__in=customers_before_this_month
     ).values('customer_id').distinct().count()
 
@@ -264,20 +261,23 @@ def _calculate_customer_metrics(today: date, start_of_month: date) -> Dict[str, 
     # New guest rebooking rate
     # New guests this month are customers whose first appointment was this month
     # Track if they've booked again
-    new_guests = Appointment.objects.filter(
-        date__gte=start_of_month,
-        date__lte=today,
-        status__in=['confirmed', 'completed']
-    ).annotate(
+    # Get customers with their first appointment date
+    first_appointments = Appointment.objects.filter(
+        customer__appointments__isnull=False
+    ).values('customer_id').annotate(
         first_appointment=Min('customer__appointments__date')
-    ).filter(first_appointment__gte=start_of_month).distinct('customer')
+    ).filter(first_appointment__gte=start_of_month)
 
-    total_new_guests = new_guests.count()
+    total_new_guests = first_appointments.count()
 
     # Count how many new guests have rebooked (more than 1 appointment total)
-    rebooked_guests = new_guests.annotate(
-        appointment_count=Count('customer__appointments')
-    ).filter(appointment_count__gt=1).count()
+    new_guests_with_counts = Appointment.objects.filter(
+        customer_id__in=first_appointments.values('customer_id')
+    ).values('customer_id').annotate(
+        appointment_count=Count('id')
+    )
+
+    rebooked_guests = new_guests_with_counts.filter(appointment_count__gt=1).count()
 
     new_guest_rebooking_rate = (
         (rebooked_guests / total_new_guests) * 100 if total_new_guests > 0 else 0
