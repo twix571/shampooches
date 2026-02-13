@@ -5,6 +5,17 @@ import logging
 from pathlib import Path
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
+import warnings
+
+# Suppress Anymail SendGrid deprecation warning
+# SendGrid is no longer officially supported by django-anymail as of June 2025,
+# but the integration will probably keep working. This warning acknowledges that
+# the integration is now untested. See: https://github.com/anymail/django-anymail/issues/432
+warnings.filterwarnings(
+    "ignore",
+    message="django-anymail has dropped official support for SendGrid",
+)
+SILENCED_SYSTEM_CHECKS = ["anymail.W003"]
 
 from .base import *
 
