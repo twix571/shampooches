@@ -77,50 +77,9 @@
         {% endif %}
 
         <!-- Two-Column Layout -->
-        <div class="grid lg:grid-cols-[20%_1fr] gap-4 sm:gap-6 mb-8 items-start">
-            <!-- Metrics and Actions Grid (First on Mobile) -->
-            <div class="order-2 lg:order-1">
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-4">
-                    <!-- Weekly Revenue -->
-                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5">
-                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Weekly Revenue</p>
-                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.weekly_revenue|floatformat:2 }}</p>
-                    </div>
-
-                    <!-- Appointments Today -->
-                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5 cursor-pointer hover:bg-gray-50 transition-colors"
-                         data-modal-url="{% url 'appointments_modal' %}">
-                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Appointments Today</p>
-                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">{{ metrics.appointments.today_appointments|floatformat:0 }}</p>
-                    </div>
-
-                    <!-- Pending Actions -->
-                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5">
-                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Pending Actions</p>
-                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">{{ metrics.appointments.pending_appointments|floatformat:0 }}</p>
-                    </div>
-
-                    <!-- Active Customers -->
-                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5">
-                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Active Customers</p>
-                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">{{ metrics.customers.active_customers|floatformat:0 }}</p>
-                    </div>
-
-                    <!-- Monthly Revenue -->
-                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5">
-                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Monthly Revenue</p>
-                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.monthly_revenue|floatformat:2 }}</p>
-                    </div>
-
-                    <!-- Quick Action Cards -->
-                    {% for card in action_cards %}
-                        {% include "mainapp/partials/action_card_partial.html" with card=card %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Today's Schedule (Below metrics on mobile, Sidebar on desktop) -->
-            <div class="order-1 lg:order-2 lg:row-span-3">
+        <div class="grid lg:grid-cols-[300px_1fr] xl:grid-cols-[350px_1fr] gap-4 sm:gap-6 mb-8 items-start">
+            <!-- Today's Schedule (Sidebar on Desktop) -->
+            <div class="order-1 lg:order-1">
                 <div class="bg-white rounded-2xl shadow-sm border border-[var(--gold)]/30 sticky top-20 safe-area-top">
                     <div class="px-3 sm:px-4 py-3 sm:py-4 border-b border-[var(--gold)]/30">
                         <h2 class="text-sm sm:text-base font-semibold text-[var(--primary-black)]">Today's Schedule</h2>
@@ -253,6 +212,47 @@
                             </div>
                         {% endif %}
                     </div>
+                </div>
+            </div>
+
+            <!-- Metrics and Actions Grid -->
+            <div class="order-2 lg:order-2">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                    <!-- Weekly Revenue -->
+                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5">
+                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Weekly Revenue</p>
+                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.weekly_revenue|floatformat:2 }}</p>
+                    </div>
+
+                    <!-- Appointments Today -->
+                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5 cursor-pointer hover:bg-gray-50 transition-colors"
+                         data-modal-url="{% url 'appointments_modal' %}">
+                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Appointments Today</p>
+                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">{{ metrics.appointments.today_appointments|floatformat:0 }}</p>
+                    </div>
+
+                    <!-- Pending Actions -->
+                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5">
+                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Pending Actions</p>
+                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">{{ metrics.appointments.pending_appointments|floatformat:0 }}</p>
+                    </div>
+
+                    <!-- Active Customers -->
+                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5">
+                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Active Customers</p>
+                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">{{ metrics.customers.active_customers|floatformat:0 }}</p>
+                    </div>
+
+                    <!-- Monthly Revenue -->
+                    <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5">
+                        <p class="text-xs sm:text-sm font-medium text-[var(--dark-gray)] mb-1 sm:mb-2">Monthly Revenue</p>
+                        <p class="text-lg sm:text-xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.monthly_revenue|floatformat:2 }}</p>
+                    </div>
+
+                    <!-- Quick Action Cards -->
+                    {% for card in action_cards %}
+                        {% include "mainapp/partials/action_card_partial.html" with card=card %}
+                    {% endfor %}
                 </div>
             </div>
         </div>
