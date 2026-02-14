@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="{{ site_config.business_name|default:"Professional Dog Grooming"}}">
     <title>{% block title %}{{ site_config.business_name|default:"Shampooches"}}{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
@@ -112,6 +112,25 @@
 
         body {
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            /* Safe area support for iOS */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        /* Safe area padding for sticky/fixed elements */
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top);
+        }
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .safe-area-left {
+            padding-left: env(safe-area-inset-left);
+        }
+        .safe-area-right {
+            padding-right: env(safe-area-inset-right);
         }
 
         /* Remove default browser focus outlines and use custom gold focus */
@@ -148,6 +167,8 @@
         #modal-inner-content {
             -ms-overflow-style: none;
             scrollbar-width: none;
+            /* Mobile browser toolbar padding - ensures content isn't covered */
+            padding-bottom: max(80px, env(safe-area-inset-bottom));
         }
         .alert-error { border-color: var(--error-border); background-color: var(--error-bg); }
         .alert-success { border-color: var(--success-border); background-color: var(--success-bg); }
@@ -232,7 +253,7 @@
 
     <!-- Toast Notification -->
     <div id="toast-notification"
-         class="fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-[1000] hidden"
+         class="fixed bottom-4 right-4 left-4 sm:left-auto px-6 py-3 rounded-lg shadow-lg text-white z-[1000] hidden safe-area-bottom"
          style="opacity: 0; transform: translateY(0.5rem); transition: opacity 0.3s, transform 0.3s;">
         <span id="toast-message"></span>
     </div>
@@ -241,7 +262,7 @@
     <div id="modal-overlay"
          class="fixed inset-0 bg-black/50 z-50 hidden"
          onclick="closeModalOverlay(event)">
-        <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="flex items-center justify-center min-h-screen p-4 safe-area-top safe-area-bottom">
             <div id="modal-content"
                  class="bg-white rounded-xl shadow-2xl max-w-lg sm:max-w-2xl w-full max-h-[90vh] overflow-hidden cursor-default transition-all duration-200">
                 <div id="modal-inner-content" class="overflow-y-auto max-h-[90vh]"></div>

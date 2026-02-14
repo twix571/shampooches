@@ -1,10 +1,10 @@
 {% load core_tags %}
 {% if card.page_url %}
-<a href="{% url card.page_url %}" class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-5 hover:shadow-lg hover:border-[var(--gold)]/50 transition-all duration-300 group text-left text-decoration-link h-full min-h-[100px] flex flex-col justify-center">
+<a href="{% url card.page_url %}" class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5 hover:shadow-lg hover:border-[var(--gold)]/50 transition-all duration-300 group text-left text-decoration-link h-full min-h-[88px] sm:min-h-[100px] flex flex-col justify-center min-h-[44px]">
 {% else %}
-<button data-modal-url="{% url card.modal_url %}" class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-5 hover:shadow-lg hover:border-[var(--gold)]/50 transition-all duration-300 group text-left cursor-pointer h-full min-h-[100px] flex flex-col justify-center">
+<button data-modal-url="{% url card.modal_url %}" class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-3 sm:p-5 hover:shadow-lg hover:border-[var(--gold)]/50 transition-all duration-300 group text-left cursor-pointer h-full min-h-[88px] sm:min-h-[100px] flex flex-col justify-center min-h-[44px]">
 {% endif %}
-    <h3 class="text-base font-semibold text-[var(--primary-black)] leading-tight">{% wrap_title_words card.title %}</h3>
+    <h3 class="text-xs sm:text-sm md:text-base font-semibold text-[var(--primary-black)] leading-tight">{% wrap_title_words card.title %}</h3>
 {% if card.page_url %}
 </a>
 {% else %}
