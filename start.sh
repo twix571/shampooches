@@ -18,10 +18,6 @@ export DJANGO_SETTINGS_MODULE=myproject.settings.production
 echo "Running migrations..."
 python manage.py migrate --noinput
 
-# Create superuser if environment variables are set
-echo "Creating superuser if needed..."
-python manage.py create_superuser_if_not_exists
-
 # Collect static files
 echo "Collecting static files..."
 python manage.py collectstatic --noinput || echo "Warning: collectstatic failed"

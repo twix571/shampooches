@@ -8,6 +8,7 @@ This package contains all view functions organized by feature:
 - admin_views.py: Admin dashboard and modals
 - pricing_views.py: Pricing management, import/export
 - schedule_views.py: Time slots and schedule management
+- messaging_views.py: Contact messaging system
 """
 
 # For backward compatibility, maintain imports at package level
@@ -18,3 +19,4 @@ from .customer_views import *  # noqa: F401, F403
 from .admin_views import *  # noqa: F401, F403
 from .pricing_views import *  # noqa: F401, F403
 from .schedule_views import *  # noqa: F401, F403
+from .messaging_views import *  # noqa: F401, F403

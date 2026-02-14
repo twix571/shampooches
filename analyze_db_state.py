@@ -20,7 +20,7 @@ users_without_customer = User.objects.exclude(customer_profile__isnull=False).co
 print(f'Users WITHOUT Customer profile: {users_without_customer}')
 
 print('\n=== BREAKDOWN BY USER TYPE ===')
-for user_type in ['admin', 'customer', 'groomer']:
+for user_type in ['admin', 'groomer_manager', 'groomer', 'customer']:
     count = User.objects.filter(user_type=user_type).count()
     print(f'{user_type.upper()}: {count} users')
 

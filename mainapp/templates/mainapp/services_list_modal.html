@@ -4,11 +4,11 @@
     {% if services %}
         <div class="space-y-4">
             {% for service in services %}
-                <div class="border-l-4 border-teal-500 pl-4 rounded-r-lg hover:bg-teal-50 transition-all duration-200 group">
+                <div class="border-l-4 border-gold-1000 pl-4 rounded-r-lg hover:bg-gold-100 transition-all duration-200 group">
                     <h3 class="font-semibold text-gray-800 text-lg">{{ service.name }}</h3>
                     <p class="text-gray-600 text-sm">{{ service.description }}</p>
                     <div class="mt-2 flex items-center gap-3">
-                        <span class="text-2xl font-bold bg-gradient-to-r from-teal-500 to-teal-600 bg-clip-text text-transparent">${{ service.price }}</span>
+                        <span class="text-2xl font-bold text-gold-1000">${{ service.price }}</span>
                         <span class="text-gray-400 text-sm">• {{ service.duration_minutes }} mins</span>
                     </div>
                 </div>

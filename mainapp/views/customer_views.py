@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.messages import add_message, constants
 from django.core.exceptions import ValidationError
+from django.db.models import Case, When
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -83,11 +84,26 @@ def customer_profile(request: HttpRequest) -> HttpResponse:
         if errors:
             for error in errors:
                 add_message(request, constants.ERROR, error)
+            dogs_with_bookings = set(
+                Appointment.objects.filter(
+                    customer__user=user,
+                    status__in=['pending', 'confirmed']
+                ).values_list('dog_name', flat=True)
+            )
             return render(request, 'mainapp/customer_profile.html', {
                 'user': user,
                 'customer_appointments': Appointment.objects.filter(
                     customer__user=user
-                ).select_related('service').order_by('-date', '-time'),
+                ).select_related('service').annotate(
+                    status_order=Case(
+                        When(status='pending', then=0),
+                        When(status='confirmed', then=1),
+                        When(status='completed', then=2),
+                        When(status='cancelled', then=3),
+                        default=4,
+                    )
+                ).order_by('status_order', '-date', '-time'),
+                'dogs_with_bookings': dogs_with_bookings,
             })
         elif has_changes:
             user.save()
@@ -100,7 +116,23 @@ def customer_profile(request: HttpRequest) -> HttpResponse:
     try:
         customer_appointments = Appointment.objects.filter(
             customer__user=user
-        ).select_related('service').order_by('-date', '-time')
+        ).select_related('service').annotate(
+            status_order=Case(
+                When(status='pending', then=0),
+                When(status='confirmed', then=1),
+                When(status='completed', then=2),
+                When(status='cancelled', then=3),
+                default=4,
+            )
+        ).order_by('status_order', '-date', '-time')
+
+        # Get dog names with pending or confirmed bookings
+        dogs_with_bookings = set(
+            Appointment.objects.filter(
+                customer__user=user,
+                status__in=['pending', 'confirmed']
+            ).values_list('dog_name', flat=True)
+        )
 
         breeds = Breed.objects.filter(is_active=True).order_by('name')
 
@@ -108,6 +140,7 @@ def customer_profile(request: HttpRequest) -> HttpResponse:
             'user': user,
             'customer_appointments': customer_appointments,
             'breeds': breeds,
+            'dogs_with_bookings': dogs_with_bookings,
         }
         return render(request, 'mainapp/customer_profile.html', context)
     except Exception as e:

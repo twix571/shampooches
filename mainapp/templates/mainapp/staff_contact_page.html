@@ -1,0 +1,279 @@
+{% extends "mainapp/base.html" %}
+{% load static %}
+
+{% block title %}Staff Messaging - {{ site_config.business_name|default:"Shampooches" }}{% endblock %}
+
+{% block content %}
+<div class="hidden"><meta name="current-username" content="{{ user.username }}"></div>
+<div class="min-h-screen bg-gold-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:py-4 py-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Staff Messaging</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Threads List -->
+            <div class="lg:col-span-1 bg-white rounded-lg shadow-sm">
+                <div class="p-4 border-b border-gray-200">
+                    <h2 class="font-semibold text-gray-800 mb-2">Customer Conversations</h2>
+                    <div class="mb-2">
+                        <input
+                            type="text"
+                            id="customer-filter"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-500"
+                            placeholder="Search by customer..."
+                        >
+                    </div>
+                    <div id="thread-count" class="text-xs text-gray-500"></div>
+                </div>
+
+                <div class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto" id="threads-list">
+                    <!-- Threads will be loaded here via JavaScript -->
+                    <div class="p-4 text-center text-gray-500">
+                        <p>Loading conversations...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-sm flex flex-col" style="min-height: 500px;">
+                <!-- Thread Header -->
+                <div id="thread-header" class="hidden p-4 border-b border-gray-200">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h2 id="thread-subject" class="font-semibold text-gray-800 mb-1"></h2>
+                            <div class="text-sm text-gray-600">
+                                <span class="font-medium">Customer:</span>
+                                <span id="thread-customer"></span>
+                            </div>
+                        </div>
+                        <div id="active-viewers" class="text-sm text-gray-600"></div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-8">
+                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Select a conversation</h3>
+                    <p class="text-gray-500 text-center">Choose a conversation from the list to view and respond to customer messages.</p>
+                </div>
+
+                <!-- Messages List -->
+                <div id="messages-list" class="hidden flex-1 overflow-y-auto p-4 space-y-4" style="min-height: 300px;"></div>
+
+                <!-- Typing Indicator -->
+                <div id="typing-indicator" class="hidden px-4 py-2 bg-gray-50 text-sm text-gray-600 italic"></div>
+
+                <!-- Message Input -->
+                <div id="message-input-area" class="hidden border-t border-gray-200 p-4">
+                    <form id="message-form" class="flex gap-2">
+                        <input
+                            type="text"
+                            name="message"
+                            id="message-input"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
+                            placeholder="Type your response..."
+                            autocomplete="off"
+                            required
+                        >
+                        <button type="submit" class="px-6 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-700 transition font-medium">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+
+<script src="{% static 'js/contact-messaging.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DEBUG: DOMContentLoaded fired');
+    console.log('DEBUG: window.getCSRFToken =', window.getCSRFToken);
+    console.log('DEBUG: typeof window.getCSRFToken =', typeof window.getCSRFToken);
+
+    (function() {
+        'use strict';
+
+        let allThreads = [];
+        let currentThreadId = null;
+        let currentCustomerIdFilter = '';
+        let filterDebounceTimer = null;
+
+        // Load all threads for staff
+        async function loadAllThreads(customerFilter = '') {
+            console.log('DEBUG: loadAllThreads called, typeof getCSRFToken =', typeof getCSRFToken);
+            try {
+                const url = customerFilter
+                    ? `/api/contact/staff/threads/?customer=${encodeURIComponent(customerFilter)}`
+                    : '/api/contact/staff/threads/';
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken(),
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    allThreads = data.data.threads || [];
+                    renderThreadsList(allThreads);
+                    updateThreadCount(allThreads.length);
+                } else {
+                    showNotification('error', data.message || 'Failed to load conversations');
+                }
+            } catch (error) {
+                console.error('Error loading threads:', error);
+                showNotification('error', 'Failed to load conversations');
+            }
+        }
+
+    function renderThreadsList(threads) {
+        const threadsList = document.getElementById('threads-list');
+
+        if (threads.length === 0) {
+            threadsList.innerHTML = `
+                <div class="p-4 text-center text-gray-500">
+                    <p>No conversations found.</p>
+                </div>
+            `;
+            return;
+        }
+
+        threadsList.innerHTML = threads.map(thread => `
+            <button onclick="selectStaffThread(${thread.id})"
+                    class="w-full text-left p-4 hover:bg-gray-50 transition focus:outline-none focus:bg-gray-100"
+                    data-thread-id="${thread.id}">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-gray-800 truncate">${thread.subject}</p>
+                        <p class="text-sm text-gray-500 truncate">Customer: ${thread.customer}</p>
+                        <p class="text-xs text-gray-400 mt-1 truncate">${thread.last_message}</p>
+                    </div>
+                    <div class="ml-2 flex-shrink-0 text-right">
+                        <p class="text-xs text-gray-400">${formatMessageTime(thread.last_message_at)}</p>
+                        ${thread.unread_count > 0 ? `<span class="inline-block px-2 py-0.5 bg-red-500 text-white text-xs rounded-full mt-1">${thread.unread_count} unread</span>` : ''}
+                    </div>
+                </div>
+            </button>
+        `).join('');
+    }
+
+    async function selectStaffThread(threadId) {
+        currentThreadId = threadId;
+
+        // Update UI
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('thread-header').classList.remove('hidden');
+        document.getElementById('messages-list').classList.remove('hidden');
+        document.getElementById('message-input-area').classList.remove('hidden');
+
+        // Clear message list
+        const messagesList = document.getElementById('messages-list');
+        messagesList.innerHTML = '<div class="text-center text-gray-500 py-8">Loading messages...</div>';
+
+        try {
+            const response = await fetch(`/api/contact/staff/threads/${threadId}/messages/`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update customer name in header
+                document.getElementById('thread-customer').textContent = data.data.customer || 'Unknown';
+                document.getElementById('thread-subject').textContent = data.data.subject || '';
+
+                // Render messages
+                renderStaffMessages(data.data.messages);
+            } else {
+                showNotification('error', data.message || 'Failed to load messages');
+            }
+        } catch (error) {
+            console.error('Error loading messages:', error);
+            showNotification('error', 'Failed to load messages');
+        }
+
+        // Start polling for status
+        startStatusPolling(threadId);
+    }
+
+    function renderStaffMessages(messages) {
+        const messagesList = document.getElementById('messages-list');
+
+        if (messages.length === 0) {
+            messagesList.innerHTML = '<p class="text-center text-gray-500 py-8">No messages yet.</p>';
+            return;
+        }
+
+        const currentUsername = document.querySelector('meta[name="current-username"]')?.content;
+
+        messagesList.innerHTML = messages.map(msg => {
+            const isOwnMessage = msg.sender === currentUsername;
+            const isFromCustomer = msg.sender_type === 'customer';
+            const bgClass = isOwnMessage ? 'bg-gold-500 text-white' : (isFromCustomer ? 'bg-gray-100 text-gray-800' : 'bg-blue-50 text-gray-800');
+
+            return `
+                <div class="flex ${isOwnMessage ? 'justify-end' : 'justify-start'}">
+                    <div class="max-w-[80%] ${bgClass} px-4 py-2 rounded-lg">
+                        <p class="text-sm font-medium mb-1 ${isOwnMessage ? 'text-gold-100' : (isFromCustomer ? 'text-gray-700' : 'text-blue-700')}">
+                            ${msg.sender} ${isOwnMessage ? '(You)' : ''} ${isFromCustomer ? '(Customer)' : '(Staff)'}
+                        </p>
+                        <p class="whitespace-pre-wrap break-words">${escapeHtml(msg.content)}</p>
+                        <p class="text-xs ${isOwnMessage ? 'text-gold-200' : 'text-gray-500'} mt-1">
+                            ${formatMessageTime(msg.created_at)}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Scroll to bottom
+        messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    function updateThreadCount(count) {
+        const countEl = document.getElementById('thread-count');
+        if (countEl) {
+            countEl.textContent = `${count} conversation${count !== 1 ? 's' : ''}`;
+        }
+    }
+
+    // Customer filter with debounce
+    const customerFilterInput = document.getElementById('customer-filter');
+    if (customerFilterInput) {
+        customerFilterInput.addEventListener('input', function(event) {
+            const filterValue = event.target.value.trim();
+
+            // Clear existing debounce timer
+            if (filterDebounceTimer) {
+                clearTimeout(filterDebounceTimer);
+            }
+
+            // Debounce for 300ms
+            filterDebounceTimer = setTimeout(() => {
+                loadAllThreads(filterValue);
+            }, 300);
+        });
+    }
+
+    // Expose function for global access
+    window.selectStaffThread = selectStaffThread;
+
+    // Load threads on page load
+    loadAllThreads();
+
+    })();
+});
+</script>
+{% endblock %}

@@ -20,7 +20,7 @@
 
 <!-- All Days in One Container -->
 <div class="rounded-lg overflow-hidden border border-gray-200 mb-8 shadow-sm">
-    <div class="grid grid-cols-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+    <div class="grid grid-cols-5 border-b border-gray-200 bg-gray-50">
         {% for day in calendar_data %}
             <div class="px-3 py-2 {% if day.is_today %}bg-blue-100{% endif %} transition-colors">
                 <div class="font-semibold text-gray-800 text-sm">{{ day.day_name }}</div>
@@ -34,29 +34,92 @@
                  data-date="{{ day.date|date:'Y-m-d' }}"
                  data-day-name="{{ day.day_name }}">
                 {% if day.appointments %}
-                    <div class="space-y-2">
-                        {% for appointment in day.appointments|dictsort:"time" %}
-                            <div class="bg-gray-50 rounded-md p-2 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 transition-all duration-200 group">
-                                <div class="flex items-center justify-between mb-1">
-                                    <span class="text-sm font-semibold text-gray-700" style="min-width: 50px;">
-                                        {% if appointment.time %}
-                                            {% if appointment.time.hour == 0 and appointment.time.minute == 0 %}
-                                                <span class="text-red-500" title="Invalid midnight time">00:00</span>
-                                            {% else %}
-                                                {{ appointment.time|date:"H:i" }}
-                                            {% endif %}
-                                        {% else %}
-                                            <span class="text-red-500" title="Missing time">TBA</span>
-                                        {% endif %}
-                                    </span>
-                                    {% status_badge appointment.status %}
-                                </div>
-                                <div class="text-sm font-medium text-gray-800 truncate">{{ appointment.customer.name }}</div>
-                                <div class="text-xs text-gray-600 truncate">{{ appointment.dog_name }}</div>
-                                <div class="text-xs text-gray-500 mt-1 truncate">{{ appointment.service.name }}</div>
+                    {% regroup day.appointments by status as status_groups %}
+                    {% for status_group in status_groups %}
+                        {% if status_group.grouper == 'pending' %}
+                            <div class="space-y-2 mb-4">
+                                <div class="text-xs font-semibold text-yellow-600 uppercase tracking-wide mb-1">Pending</div>
+                                {% for appointment in status_group.list|dictsort:"time" %}
+                                    <div class="bg-yellow-50 rounded-md p-2 hover:bg-yellow-100 border border-yellow-200 hover:border-yellow-300 transition-all duration-200 group">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-semibold text-gray-700" style="min-width: 50px;">
+                                                {% if appointment.time %}
+                                                    {% if appointment.time.hour == 0 and appointment.time.minute == 0 %}
+                                                        <span class="text-red-500" title="Invalid midnight time">00:00</span>
+                                                    {% else %}
+                                                        {{ appointment.time|date:"H:i" }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-red-500" title="Missing time">TBA</span>
+                                                {% endif %}
+                                            </span>
+                                            {% status_badge appointment.status %}
+                                        </div>
+                                        <div class="text-sm font-medium text-gray-800 truncate">{{ appointment.customer.name }}</div>
+                                        <div class="text-xs text-gray-600 truncate">{{ appointment.dog_name }}</div>
+                                        <div class="text-xs text-gray-500 mt-1 truncate">{{ appointment.service.name }}</div>
+                                    </div>
+                                {% endfor %}
                             </div>
-                        {% endfor %}
-                    </div>
+                        {% elif status_group.grouper == 'confirmed' %}
+                            <div class="space-y-2 mb-4">
+                                <div class="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Confirmed</div>
+                                {% for appointment in status_group.list|dictsort:"time" %}
+                                    <div class="bg-green-50 rounded-md p-2 hover:bg-green-100 border border-green-200 hover:border-green-300 transition-all duration-200 group">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-sm font-semibold text-gray-700" style="min-width: 50px;">
+                                                {% if appointment.time %}
+                                                    {% if appointment.time.hour == 0 and appointment.time.minute == 0 %}
+                                                        <span class="text-red-500" title="Invalid midnight time">00:00</span>
+                                                    {% else %}
+                                                        {{ appointment.time|date:"H:i" }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-red-500" title="Missing time">TBA</span>
+                                                {% endif %}
+                                            </span>
+                                            {% status_badge appointment.status %}
+                                        </div>
+                                        <div class="text-sm font-medium text-gray-800 truncate">{{ appointment.customer.name }}</div>
+                                        <div class="text-xs text-gray-600 truncate">{{ appointment.dog_name }}</div>
+                                        <div class="text-xs text-gray-500 mt-1 truncate">{{ appointment.service.name }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% elif status_group.grouper == 'cancelled' %}
+                            <div class="border-t border-gray-200 pt-2 mt-2">
+                                <button type="button" class="w-full flex items-center justify-between text-xs font-semibold text-red-400 hover:text-red-600 uppercase tracking-wide mb-1 collapse-cancelled-btn" data-day-id="cancelled-{{ forloop.parentloop.counter }}">
+                                    <span>Cancelled ({{ status_group.list|length }})</span>
+                                    <svg class="w-4 h-4 transform transition-transform" data-chevron="cancelled-{{ forloop.parentloop.counter }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div class="space-y-2 hidden cancelled-appointments" id="cancelled-content-{{ forloop.parentloop.counter }}">
+                                    {% for appointment in status_group.list|dictsort:"time" %}
+                                        <div class="bg-red-50 rounded-md p-2 hover:bg-red-100 border border-red-200 hover:border-red-300 transition-all duration-200 group opacity-60">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="text-sm font-semibold text-gray-700" style="min-width: 50px;">
+                                                    {% if appointment.time %}
+                                                        {% if appointment.time.hour == 0 and appointment.time.minute == 0 %}
+                                                            <span class="text-red-500" title="Invalid midnight time">00:00</span>
+                                                        {% else %}
+                                                            {{ appointment.time|date:"H:i" }}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <span class="text-red-500" title="Missing time">TBA</span>
+                                                    {% endif %}
+                                                </span>
+                                                {% status_badge appointment.status %}
+                                            </div>
+                                            <div class="text-sm font-medium text-gray-800 truncate">{{ appointment.customer.name }}</div>
+                                            <div class="text-xs text-gray-600 truncate">{{ appointment.dog_name }}</div>
+                                            <div class="text-xs text-gray-500 mt-1 truncate">{{ appointment.service.name }}</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                 {% else %}
                     <p class="text-gray-400 text-xs text-center py-4">No appointments</p>
                 {% endif %}
@@ -133,7 +196,7 @@
                 <button id="confirm-modal-cancel" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
                     Cancel
                 </button>
-                <button id="confirm-modal-confirm" class="px-4 py-2 bg-[var(--gold)] text-white rounded-lg hover:bg-[var(--gold-hover)] transition shadow-sm font-medium">
+                <button id="confirm-modal-confirm" class="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#967D21] transition shadow-sm font-medium">
                     Confirm
                 </button>
             </div>
@@ -413,7 +476,6 @@
 
         window.copiedTimeSlots = timeSlotsData;
         window.copiedTimeSlotsTimestamp = Date.now();
-        console.log('All groomers time slots stored in memory');
         hideContextMenu();
     };
 
@@ -438,7 +500,6 @@
 
         window.copiedTimeSlots = timeSlotsData;
         window.copiedTimeSlotsTimestamp = Date.now();
-        console.log(`Time slots for ${groomerName} stored in memory`);
         hideContextMenu();
     };
 
@@ -491,7 +552,6 @@
     }
 
     window.populateGroomerSubmenu = async function populateGroomerSubmenu(date) {
-        console.log('[DEBUG] populateGroomerSubmenu called with date:', date);
         const submenu = document.getElementById('groomer-submenu');
         const existingOptions = submenu.querySelectorAll('.groomer-option');
         existingOptions.forEach(option => option.remove());
@@ -573,6 +633,21 @@
 
         modal.classList.remove('hidden');
     };
+
+    // Handle collapsible cancelled appointments
+    document.addEventListener('click', function(event) {
+        const collapseBtn = event.target.closest('.collapse-cancelled-btn');
+        if (collapseBtn) {
+            const dayId = collapseBtn.getAttribute('data-day-id');
+            const content = document.getElementById('cancelled-content-' + dayId.split('-')[1]);
+            const chevron = document.querySelector('[data-chevron="' + dayId + '"]');
+
+            if (content && chevron) {
+                content.classList.toggle('hidden');
+                chevron.classList.toggle('rotate-180');
+            }
+        }
+    });
 
     // Load available time slots when calendar loads
     window.loadAvailableTimeSlots();

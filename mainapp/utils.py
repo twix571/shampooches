@@ -88,16 +88,8 @@ def groomer_required(view_func: Callable[..., HttpResponse]) -> Callable[..., Ht
             logger.warning(f"Unauthenticated access attempt to {view_func.__name__}")
             return redirect_to_login(request.get_full_path())
 
-        try:
-            profile = request.user.profile
-            user_type = profile.user_type
-        except AttributeError:
-            from django.contrib.messages import add_message, constants
-            logger.warning(f"User {request.user.username} has no profile")
-            add_message(request, constants.ERROR, 'Your account is not properly configured. Please contact support.')
-            return redirect('customer_landing')
-
-        if user_type not in ['admin', 'groomer']:
+        user_type = getattr(request.user, 'user_type', None)
+        if user_type not in ['admin', 'groomer_manager', 'groomer']:
             from django.contrib.messages import add_message, constants
             logger.warning(f"User {request.user.username} with type {user_type} attempted to access groomer-only view {view_func.__name__}")
             add_message(request, constants.ERROR, 'You do not have permission to access this page.')
@@ -292,17 +284,19 @@ def calculate_price_breakdown(
     }
 
 
-def get_available_time_slots_count(groomer: 'Groomer', booking_date: date) -> int:
+def get_available_time_slots_count(groomer: 'Groomer', booking_date: date, customer: Optional['Customer'] = None) -> int:
     """Get count of available time slots for a groomer and date.
 
     Filters time slots to:
     1. Only slots for the specified groomer and date
     2. Only active slots (is_active=True)
-    3. Excludes slots that already have pending or confirmed appointments
+    3. Excludes slots that already have pending, confirmed, or completed appointments
+    4. If customer provided, allows their existing appointments to remain visible
 
     Args:
         groomer: Groomer instance.
         booking_date: Date object to check availability for.
+        customer: Optional customer instance to exclude from unavailable check.
 
     Returns:
         Number of available time slots for the given groomer and date.
@@ -314,6 +308,7 @@ def get_available_time_slots_count(groomer: 'Groomer', booking_date: date) -> in
         print(f'{count} slots available for {tomorrow}')
     """
     from .models import TimeSlot, Appointment
+    from .constants import AppointmentStatus
 
     # Get all active time slots for this date
     time_slots = TimeSlot.objects.filter(
@@ -322,12 +317,18 @@ def get_available_time_slots_count(groomer: 'Groomer', booking_date: date) -> in
         is_active=True
     )
 
-    # Get existing appointment times
-    booked_times = Appointment.objects.filter(
+    # Get existing appointment times (completed appointments also block time slots)
+    # Exclude current customer's appointments to allow multi-dog bookings in same slot
+    booked_times_query = Appointment.objects.filter(
         groomer=groomer,
         date=booking_date,
-        status__in=['pending', 'confirmed']
-    ).values_list('time', flat=True)
+        status__in=AppointmentStatus.BLOCKING_STATUSES
+    )
+
+    if customer:
+        booked_times_query = booked_times_query.exclude(customer=customer)
+
+    booked_times = booked_times_query.values_list('time', flat=True)
 
     # Filter out booked slots and count remaining
     available_count = time_slots.exclude(start_time__in=booked_times).count()
@@ -335,23 +336,27 @@ def get_available_time_slots_count(groomer: 'Groomer', booking_date: date) -> in
     return available_count
 
 
-def get_available_time_slots(groomer: 'Groomer', booking_date: date) -> list[Dict[str, Any]]:
+def get_available_time_slots(groomer: 'Groomer', booking_date: date, customer: Optional['Customer'] = None) -> list[Dict[str, Any]]:
     """Get list of available time slots for a groomer and date.
 
     Returns an ordered list of time slots that are:
     1. For the specified groomer and date
     2. Currently active (is_active=True)
-    3. Not booked with pending or confirmed appointments
+    3. Not booked with pending, confirmed, or completed appointments
+    4. If customer provided, their ACTIVE (pending, confirmed) appointments remain available
+       for multi-dog booking in same slot. Completed appointments still block.
 
     Args:
         groomer: Groomer instance.
         booking_date: Date object to check availability for.
+        customer: Optional customer instance to exclude from unavailable check.
 
     Returns:
         List of dictionaries containing time slot information:
         - time (str): Time in 'HH:MM' 24-hour format
         - display (str): Formatted time string (e.g., '02:30 PM')
         - duration (int): Always 0 (placeholder for future enhancement)
+        - has_same_customer_booking (bool): True if slot is available because customer already has an active booking
 
     Example:
         groomer = Groomer.objects.first()
@@ -361,6 +366,7 @@ def get_available_time_slots(groomer: 'Groomer', booking_date: date) -> list[Dic
             print(f"{slot['display']}")
     """
     from .models import TimeSlot, Appointment
+    from .constants import AppointmentStatus
 
     # Get all active time slots for this date
     time_slots = TimeSlot.objects.filter(
@@ -369,19 +375,43 @@ def get_available_time_slots(groomer: 'Groomer', booking_date: date) -> list[Dic
         is_active=True
     ).order_by('start_time')
 
-    # Get existing appointment times
-    booked_times = Appointment.objects.filter(
+    # Get existing appointment times (completed appointments also block time slots)
+    # Exclude current customer's ACTIVE appointments (pending, confirmed) only
+    # to allow multi-dog bookings in same slot. Completed appointments still block.
+    booked_times_query = Appointment.objects.filter(
         groomer=groomer,
         date=booking_date,
-        status__in=['pending', 'confirmed']
-    ).values_list('time', flat=True)
+        status__in=AppointmentStatus.BLOCKING_STATUSES
+    )
+
+    if customer:
+        # Only exclude active appointments, not completed ones
+        booked_times_query = booked_times_query.exclude(
+            customer=customer,
+            status__in=AppointmentStatus.ACTIVE_STATUSES
+        )
+
+    booked_times = booked_times_query.values_list('time', flat=True)
+
+    # Get customer's active booked times for indicator (not completed)
+    customer_booked_times = set()
+    if customer:
+        customer_booked_times = set(
+            Appointment.objects.filter(
+                groomer=groomer,
+                date=booking_date,
+                customer=customer,
+                status__in=AppointmentStatus.ACTIVE_STATUSES
+            ).values_list('time', flat=True)
+        )
 
     # Filter out booked slots
     available_slots = [
         {
             'time': slot.start_time.strftime('%H:%M'),
             'display': slot.start_time.strftime('%I:%M %p'),
-            'duration': 0  # Can be calculated if needed
+            'duration': 0,  # Can be calculated if needed
+            'has_same_customer_booking': slot.start_time in customer_booked_times
         }
         for slot in time_slots
         if slot.start_time not in booked_times
@@ -393,8 +423,8 @@ def get_available_time_slots(groomer: 'Groomer', booking_date: date) -> list[Dic
 def has_appointment_at_time(groomer: 'Groomer', booking_date: date, booking_time: time) -> bool:
     """Check if there is an appointment for a groomer at a specific date and time.
 
-    Checks for existing appointments that are either pending or confirmed.
-    Cancelled and completed appointments do not count as conflicts.
+    Checks for existing appointments that are pending, confirmed, or completed.
+    Completed appointments block the time slot to prevent same-day rebooking.
 
     Args:
         groomer: Groomer instance to check.
@@ -402,7 +432,7 @@ def has_appointment_at_time(groomer: 'Groomer', booking_date: date, booking_time
         booking_time: Time object to check for appointments.
 
     Returns:
-        True if there is a pending or confirmed appointment at that date and time,
+        True if there is a pending, confirmed, or completed appointment at that date and time,
         False otherwise.
 
     Example:
@@ -413,12 +443,13 @@ def has_appointment_at_time(groomer: 'Groomer', booking_date: date, booking_time
             print("This time slot is already booked")
     """
     from .models import Appointment
+    from .constants import AppointmentStatus
 
     return Appointment.objects.filter(
         groomer=groomer,
         date=booking_date,
         time=booking_time,
-        status__in=['pending', 'confirmed']
+        status__in=AppointmentStatus.BLOCKING_STATUSES
     ).exists()
 
 

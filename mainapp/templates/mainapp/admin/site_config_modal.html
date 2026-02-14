@@ -6,7 +6,7 @@
             Manage business information, contact details, and hours. Changes appear immediately across the customer landing page, booking flow, and contact displays.
         </p>
         <a href="{% url 'admin:mainapp_siteconfig_changelist' %}" target="_blank" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
-           style="background: linear-gradient(to right, #0ea5e9, #0284c7); color: white;">
+           style="background: #0ea5e9; color: white;">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
@@ -17,9 +17,9 @@
     {% if site_config %}
         <div class="space-y-6">
             <!-- Business Information -->
-            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-sky-50 to-cyan-50">
+            <div class="border border-gray-200 rounded-lg p-4 bg-gold-100">
                 <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 mr-2 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                     Business Information
@@ -50,9 +50,9 @@
             </div>
 
             <!-- Business Hours -->
-            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-teal-50 to-emerald-50">
+            <div class="border border-gray-200 rounded-lg p-4 bg-gold-100">
                 <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 mr-2 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     Business Hours
@@ -60,7 +60,7 @@
                 <div class="space-y-2 text-sm">
                     {% for hour_line in site_config.get_hours_display %}
                     <div class="flex items-start {% if 'Closed' in hour_line %}text-gray-500{% endif %}">
-                        <svg class="w-4 h-4 mr-2 mt-0.5 {% if 'Closed' in hour_line %}text-gray-400{% else %}text-teal-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 mr-2 mt-0.5 {% if 'Closed' in hour_line %}text-gray-400{% else %}text-gold-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {% if 'Closed' not in hour_line %}
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             {% else %}
@@ -76,7 +76,7 @@
 
         <div class="mt-6 pt-4 border-t border-gray-200">
             <h4 class="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                <svg class="w-4 h-4 mr-2 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 Quick Tips:
@@ -98,7 +98,7 @@
             </div>
             <h3 class="text-lg font-semibold text-gray-800 mb-2">No Configuration Found</h3>
             <p class="text-sm text-gray-600 mb-4">A site configuration is required to display business hours and contact info.</p>
-            <a href="{{ admin_add_url }}" target="_blank" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md bg-sky-500 text-white hover:bg-sky-600">
+            <a href="{{ admin_add_url }}" target="_blank" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md bg-gold-500 text-white hover:bg-gold-600">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>

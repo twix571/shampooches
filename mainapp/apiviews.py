@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from .models import (
     Appointment, Breed, BreedServiceMapping, Customer,
-    Groomer, Service, TimeSlot
+    Groomer, Service, TimeSlot, LegalAgreement
 )
 from .serializers import (
     CalculatePriceRequestSerializer, CalculateFinalPriceRequestSerializer,
@@ -108,6 +108,11 @@ class BookingAvailableDaysView(StandardAPIView):
         today = date.today()
         days = []
 
+        # Get current customer if authenticated to enable multi-dog booking visibility
+        customer = None
+        if request.user.is_authenticated and hasattr(request.user, 'customer_profile'):
+            customer = request.user.customer_profile
+
         # Use Django's built-in localized formatting (respects locale settings in settings.py)
         for i in range(14):
             current_date = today + timedelta(days=i)
@@ -117,7 +122,7 @@ class BookingAvailableDaysView(StandardAPIView):
             preferred_slots = 0
 
             for groomer in all_groomers:
-                slots_count = get_available_time_slots_count(groomer, current_date)
+                slots_count = get_available_time_slots_count(groomer, current_date, customer=customer)
                 total_slots += slots_count
                 if preferred_groomer and groomer.id == preferred_groomer.id:
                     preferred_slots = slots_count
@@ -178,8 +183,14 @@ class BookingTimeSlotsView(StandardAPIView):
 
         # Get primary slots from preferred groomer
         primary_slots = []
+
+        # Get current customer if authenticated to enable multi-dog booking visibility
+        customer = None
+        if request.user.is_authenticated and hasattr(request.user, 'customer_profile'):
+            customer = request.user.customer_profile
+
         if preferred_groomer:
-            preferred_slots = get_available_time_slots(preferred_groomer, booking_date)
+            preferred_slots = get_available_time_slots(preferred_groomer, booking_date, customer=customer)
             primary_slots = [
                 {**slot, 'is_override': False, 'is_primary': True}
                 for slot in preferred_slots
@@ -196,7 +207,7 @@ class BookingTimeSlotsView(StandardAPIView):
             # Collect time slots from other groomers
             other_slots_by_time = {}
             for groomer in other_groomers:
-                groomer_slots = get_available_time_slots(groomer, booking_date)
+                groomer_slots = get_available_time_slots(groomer, booking_date, customer=customer)
                 for slot in groomer_slots:
                     # Group by time
                     time_key = slot['time']
@@ -774,3 +785,106 @@ class BatchDayTimeSlotsView(StandardAPIView):
                 flat_result.append(date_data)
 
         return self.success_response(data={'time_slots': flat_result})
+
+
+class ActiveAgreementView(StandardAPIView):
+    """API endpoint for getting the currently active legal agreement."""
+
+    @handle_api_errors('ActiveAgreementView')
+    def get(self, request):
+        """Get the currently active legal agreement.
+
+        Returns:
+            - id: The ID of the agreement
+            - title: Title of the agreement
+            - content: Full text of the agreement
+            - effective_date: When this agreement becomes effective
+            - is_required: Whether customers must sign (True if active, False if no active agreement)
+
+        If no active agreement exists, returns empty values with is_required=False.
+        """
+        agreement = LegalAgreement.get_active_agreement()
+
+        if agreement:
+            return self.success_response(data={
+                'id': agreement.id,
+                'title': agreement.title,
+                'content': agreement.content,
+                'effective_date': agreement.effective_date.strftime('%Y-%m-%d') if agreement.effective_date else None,
+                'is_required': True
+            })
+        else:
+            return self.success_response(data={
+                'id': None,
+                'title': None,
+                'content': None,
+                'effective_date': None,
+                'is_required': False
+            })
+
+
+class CustomerDogsView(StandardAPIView):
+    """API endpoint for getting the authenticated customer's dogs with appointment status."""
+
+    @handle_api_errors('CustomerDogsView')
+    def get(self, request):
+        """Get the authenticated customer's dogs.
+
+        Returns a list of the customer's dogs with information about whether
+        they have a pending or confirmed appointment. Dogs with active appointments
+        are marked as unavailable for booking.
+
+        Returns:
+            - dogs: List of dog profiles with:
+                - id: Dog ID
+                - name: Dog's name
+                - breed_id: Breed ID
+                - breed_name: Breed name
+                - weight: Dog's weight
+                - age: Dog's age
+                - has_active_appointment: True if dog has pending/confirmed appointment
+        """
+        # Check if user is authenticated and is a customer
+        if not request.user.is_authenticated or request.user.user_type != 'customer':
+            return self.error_response(
+                message='Authentication required',
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Get customer for the user
+        try:
+            from users.models import User
+            customer = request.user.customer_profile
+        except AttributeError:
+            return self.error_response(
+                message='Customer profile not found',
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get all dogs for this customer
+        from mainapp.models import Dog, Appointment
+        dogs = Dog.objects.filter(owner=request.user)
+
+        # Get all pending/confirmed appointments for this customer
+        active_appointments = Appointment.objects.filter(
+            customer=customer,
+            status__in=['pending', 'confirmed']
+        ).values_list('dog_name', flat=True)
+
+        # Build response with appointment status
+        dogs_data = []
+        for dog in dogs:
+            has_active_appointment = dog.name in active_appointments
+
+            dogs_data.append({
+                'id': dog.id,
+                'name': dog.name,
+                'breed_id': dog.breed.id if dog.breed else None,
+                'breed_name': dog.breed.name if dog.breed else None,
+                'weight': float(dog.weight) if dog.weight else None,
+                'age': dog.age or '',
+                'notes': dog.notes or '',
+                'has_active_appointment': has_active_appointment
+            })
+
+        return self.success_response(data={'dogs': dogs_data})

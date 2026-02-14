@@ -19,6 +19,7 @@ class User(AbstractUser):
 
     USER_TYPE_CHOICES = [
         ('admin', 'Admin'),
+        ('groomer_manager', 'Groomer Manager'),
         ('groomer', 'Groomer'),
         ('customer', 'Customer'),
     ]

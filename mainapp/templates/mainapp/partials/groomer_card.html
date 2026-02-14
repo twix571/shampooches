@@ -1,12 +1,12 @@
-<div class="border {% if not groomer.is_active %}border-gray-300 bg-gray-50{% else %}border-gray-200{% endif %} rounded-lg p-6 hover:border-blue-200 transition-all duration-300 group">
+<div class="border {% if not groomer.is_active %}border-gray-300 bg-gray-50{% else %}border-gray-200{% endif %} rounded-lg p-6 hover:border-gray-300 transition-all duration-300 group">
     <div class="flex items-start space-x-4">
         {% if groomer.image %}
             <div class="flex-shrink-0">
                 <img src="{{ groomer.image.url }}" alt="{{ groomer.name }}" class="w-20 h-20 rounded-lg object-cover shadow-sm group-hover:shadow-md transition-shadow">
             </div>
         {% else %}
-            <div class="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                <svg class="w-10 h-10 text-gray-1000" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
             </div>

@@ -11,7 +11,6 @@ from django.core.cache import cache
 from django.db import connection
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.views.decorators.csrf import csrf_exempt
 
 from mainapp.logging_utils import get_view_logger
 from mainapp.utils import admin_required, groomer_required
@@ -20,7 +19,6 @@ from mainapp.utils import admin_required, groomer_required
 logger = logging.getLogger(__name__)
 
 
-@csrf_exempt
 def health_check(request: HttpRequest) -> JsonResponse:
     """
     Health check endpoint for load balancers and monitoring systems.
@@ -84,6 +82,8 @@ def custom_login(request):
                     return redirect(next_page)
 
                 if user_type == 'admin':
+                    return redirect('admin_landing')
+                elif user_type == 'groomer_manager':
                     return redirect('admin_landing')
                 elif user_type == 'groomer':
                     return redirect('groomer_landing')

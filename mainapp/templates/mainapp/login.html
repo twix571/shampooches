@@ -1,15 +1,15 @@
 {% extends 'mainapp/base.html' %}
 
-{% block title %}Login - Shampooches{% endblock %}
+{% block title %}Login - {{ site_config.business_name|default:"Shampooches"}}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-[var(--light-gold)]/30 via-[var(--light-gold)]/20 to-white">
+<div class="min-h-screen bg-gold-50">
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="w-full max-w-md">
             <div class="bg-white rounded-2xl shadow-xl border border-[var(--gold)]/30 p-8">
                 <div class="text-center mb-8">
                     <h1 class="text-2xl font-bold text-[var(--primary-black)] mb-2">Welcome Back</h1>
-                    <p class="text-[var(--dark-gray)]">Sign in to your Shampooches account</p>
+                    <p class="text-[var(--dark-gray)]">Sign in to your {{ site_config.business_name|default:"business"}} account</p>
                 </div>
 
                 <form method="post" action="{% url 'custom_login' %}">
@@ -59,7 +59,7 @@
 
                         <button
                             type="submit"
-                            class="w-full px-4 py-3 bg-[var(--primary-black)] text-white rounded-lg hover:bg-black transition-colors font-medium shadow-md hover:shadow-lg"
+                            class="w-full px-4 py-3 bg-[#0F172A] text-white rounded-lg hover:bg-black transition-colors font-medium shadow-md hover:shadow-lg"
                         >
                             Sign In
                         </button>

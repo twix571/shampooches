@@ -290,8 +290,13 @@
 
             // Show confirmation dialog for all groomers
             if (!selectedGroomerId) {
-                if (!confirm('This will apply time slots to ALL groomers. Continue?')) {
-                    return;
+                if (typeof window.showConfirmModal === 'function') {
+                    const confirmed = await window.showConfirmModal('Apply to All Groomers', 'This will apply time slots to ALL groomers. Continue?');
+                    if (!confirmed) return;
+                } else if (typeof confirm === 'function') {
+                    if (!confirm('This will apply time slots to ALL groomers. Continue?')) {
+                        return;
+                    }
                 }
             }
 

@@ -1,0 +1,9 @@
+from django.contrib.auth import get_user_model
+User = get_user_model()
+u = User.objects.get(username='customer1')
+print(f'User: {u.username}, Type: {u.user_type}')
+print(f'Has Customer Profile: {hasattr(u, "customer_profile")}')
+if hasattr(u, 'customer_profile'):
+    print(f'Customer Profile ID: {u.customer_profile.id}')
+else:
+    print('No customer_profile found')

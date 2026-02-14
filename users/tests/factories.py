@@ -27,7 +27,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
     password = factory.PostGenerationMethodCall('set_password', 'testpass123')
-    user_type = fuzzy.FuzzyChoice(['admin', 'groomer', 'customer'])
+    user_type = fuzzy.FuzzyChoice(['admin', 'groomer_manager', 'groomer', 'customer'])
     phone = factory.Faker('phone_number')
     is_active = True
 
@@ -38,6 +38,13 @@ class AdminUserFactory(UserFactory):
     user_type = 'admin'
     is_staff = True
     is_superuser = True
+
+
+class GroomerManagerUserFactory(UserFactory):
+    """Factory for creating groomer manager users."""
+
+    user_type = 'groomer_manager'
+    is_staff = True
 
 
 class GroomerUserFactory(UserFactory):

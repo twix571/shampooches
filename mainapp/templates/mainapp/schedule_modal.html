@@ -3,7 +3,7 @@
 <div class="p-8 relative schedule-modal-container" data-context-date="{{ date|default:"" }}" data-context-day-name="{{ day_name|default:"" }}">
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-semibold text-gray-800">Edit Time Slots</h2>
-        <button onclick="closeModal()" class="px-3 py-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+        <button onclick="backToAppointmentsModal()" class="px-3 py-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -11,8 +11,8 @@
     </div>
 
     <!-- Date Display -->
-    <div class="mb-6 bg-teal-50 border border-teal-200 rounded-lg p-4">
-        <h3 class="font-medium text-teal-800">
+    <div class="mb-6 bg-gold-100 border border-gold-300 rounded-lg p-4">
+        <h3 class="font-medium text-gold-800">
             Editing availability for <span id="formatted-date">Loading...</span>
         </h3>
     </div>
@@ -26,7 +26,7 @@
         <select
             id="groomer-select"
             name="groomer_id"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-1000 focus:border-transparent"
             hx-get="/htmx/groomer-options/"
             hx-target="#groomer-select"
             hx-swap="innerHTML"
@@ -57,13 +57,13 @@
         <div class="flex gap-2 items-end">
             <div class="flex-1">
                 <label class="block text-xs text-gray-600 mb-1">Start Time</label>
-                <input type="time" name="new_start_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                <input type="time" name="new_start_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-1000">
             </div>
             <div class="flex-1">
                 <label class="block text-xs text-gray-600 mb-1">End Time</label>
-                <input type="time" name="new_end_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                <input type="time" name="new_end_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-1000">
             </div>
-            <button data-action="add-time-slot" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition">
+            <button data-action="add-time-slot" class="px-4 py-2 bg-gold-1000 text-white rounded-lg hover:bg-gold-600 transition">
                 Add
             </button>
         </div>
@@ -87,9 +87,21 @@
 
     <!-- Actions -->
     <div class="flex justify-end gap-2 border-t border-gray-200 pt-6">
-        <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
-        <button data-action="save-time-slots" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600">Save Changes</button>
+        <button onclick="backToAppointmentsModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+        <button data-action="save-time-slots" class="px-4 py-2 bg-gold-1000 text-white rounded-lg hover:bg-gold-600">Save Changes</button>
     </div>
 </div>
 
 <script src="{% static 'js/schedule-modal.js' %}"></script>
+<script>
+(function() {
+    function backToAppointmentsModal() {
+        if (window.appointmentsModalUrl && window.loadModalContent) {
+            window.loadModalContent(window.appointmentsModalUrl);
+        } else {
+            closeModal();
+        }
+    }
+    window.backToAppointmentsModal = backToAppointmentsModal;
+})();
+</script>

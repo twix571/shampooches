@@ -1,6 +1,16 @@
 from django import template
+from django.utils.safestring import mark_safe
 
 register = template.Library()
+
+
+@register.simple_tag
+def wrap_title_words(title):
+    """Wrap multi-word titles: first word on first line, rest on new line."""
+    words = title.strip().split(' ')
+    if len(words) > 1:
+        return mark_safe(f'{words[0]}<br>{" ".join(words[1:])}')
+    return title
 
 @register.filter
 def add(value, arg):
@@ -30,11 +40,12 @@ def nested_lookup(dict_obj, key1, key2):
 def status_badge(status):
     """Generate a styled status badge."""
     status_styles = {
-        'pending': 'bg-gradient-to-r from-amber-50 to-amber-100 text-amber-700 border border-amber-200',
-        'confirmed': 'bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 border border-emerald-200',
-        'completed': 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border border-blue-200',
-        'cancelled': 'bg-gradient-to-r from-slate-50 to-slate-100 text-slate-600 border border-slate-200',
+        'pending': 'bg-[#FDF6CC] text-[#967D21] border-[#D4AF37]',
+        'confirmed': 'bg-[#F0FDF4] text-[#16A34A] border-[#22C55E]',
+        'completed': 'bg-[#FEFDF5] text-[#584B0B] border-[#E5E7EB]',
+        'cancelled': 'bg-[#FEE2E2] text-[#DC2626] border-[#EF4444]',
     }
-    style = status_styles.get(status.lower(), 'bg-gradient-to-r from-slate-50 to-slate-100 text-slate-600 border border-slate-200')
+    style = status_styles.get(status.lower(), 'bg-[#F3F4F6] text-[#6B7280] border-[#D1D5DB]')
     display_status = status.title() if status else status
-    return f'<span class="inline-block px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm {style}">{display_status}</span>'
+    html = f'<span class="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded {style}">{display_status}</span>'
+    return mark_safe(html)

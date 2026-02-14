@@ -9,13 +9,14 @@ import logging
 from datetime import date, time
 from decimal import Decimal
 from typing import Optional
+from django.utils import timezone
 
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, transaction
 from django.shortcuts import get_object_or_404
 
-from .models import Appointment, Breed, Customer, Groomer, Service
-from .constants import ErrorMessages
+from .models import Appointment, Breed, Customer, Groomer, Service, LegalAgreement, MessageThread, Message
+from .constants import ErrorMessages, AppointmentStatus
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ def create_booking(
     notes: str = '',
     preferred_groomer_id: Optional[int] = None,
     user=None,
+    agreement_version_id: Optional[int] = None,
 ) -> Appointment:
     """Centralized booking creation service.
 
@@ -92,6 +94,7 @@ def create_booking(
         notes: Optional notes about the booking
         preferred_groomer_id: Optional ID of the customer's preferred groomer (may differ from actual groomer)
         user: Optional User object for registered customers (None for guest bookings)
+        agreement_version_id: Optional ID of the legal agreement version that was accepted
 
     Returns:
         Appointment: The created appointment object
@@ -151,20 +154,28 @@ def create_booking(
             breed = _get_or_raise(Breed, breed_id, 'Breed')
             service = _get_or_raise(Service, service_id, 'Service')
 
-            # Validate booking constraints
+            # Validate booking constraints (pass customer for same-customer multi-dog support)
             _validate_booking_constraints(
-                booking_date, groomer, service, booking_time
+                booking_date, groomer, service, booking_time, customer
             )
 
             # Calculate final price
             final_price = _calculate_final_price(breed, service, dog_weight)
+
+            # Get legal agreement version if provided
+            agreement_version = None
+            if agreement_version_id:
+                try:
+                    agreement_version = LegalAgreement.objects.get(id=agreement_version_id, is_active=True)
+                except LegalAgreement.DoesNotExist:
+                    logger.warning(f'Agreement version with ID {agreement_version_id} not found or not active')
 
             # Create and return the appointment
             appointment = _create_appointment(
                 customer, service, groomer, breed,
                 dog_name, dog_weight, dog_age,
                 booking_date, booking_time,
-                notes, final_price, user, preferred_groomer
+                notes, final_price, user, preferred_groomer, agreement_version
             )
 
             logger.info(
@@ -308,22 +319,28 @@ def _validate_booking_constraints(
     booking_date: date,
     groomer: Groomer,
     service: Service,
-    booking_time: time
+    booking_time: time,
+    customer: Customer
 ) -> None:
     """Validate booking date, service, groomer, and time slot availability.
+
+    Allows customers to book multiple dogs in the same time slot, up to max_dogs_per_day limit.
 
     Args:
         booking_date: Date of the booking
         groomer: Groomer object
         service: Service object
         booking_time: Time of the booking
+        customer: Customer object making the booking
 
     Raises:
         BookingDateInPastError: If booking date is in the past
         InactiveServiceError: If service is inactive
         InactiveGroomerError: If groomer is inactive
-        BookingConflictError: If time slot is already booked
+        BookingConflictError: If time slot already booked by another customer
     """
+    from .models import SiteConfig
+
     # Validate booking_date is in the future
     if booking_date < date.today():
         logger.warning(f'Attempted to book in the past: {booking_date}')
@@ -345,13 +362,15 @@ def _validate_booking_constraints(
             ErrorMessages.INACTIVE_GROOMER.format(groomer=groomer.name)
         )
 
-    # Validate no time conflicts exist
-    if Appointment.objects.filter(
+    # Check for conflicts with other customers
+    other_customer_conflicts = Appointment.objects.filter(
         groomer=groomer,
         date=booking_date,
         time=booking_time,
-        status__in=['pending', 'confirmed']
-    ).exists():
+        status__in=AppointmentStatus.BLOCKING_STATUSES
+    ).exclude(customer=customer)
+
+    if other_customer_conflicts.exists():
         logger.warning(
             f'Booking conflict detected: {groomer.name} on {booking_date} at {booking_time}'
         )
@@ -362,6 +381,30 @@ def _validate_booking_constraints(
                 time=booking_time
             )
         )
+
+    # Check daily limit for this customer
+    site_config = SiteConfig.get_active_config()
+    max_dogs = site_config.max_dogs_per_day if site_config else 3
+
+    # Count existing appointments for this customer on this date
+    existing_appointments = Appointment.objects.filter(
+        customer=customer,
+        date=booking_date,
+        status__in=AppointmentStatus.BLOCKING_STATUSES
+    ).count()
+
+    if existing_appointments >= max_dogs:
+        logger.warning(
+            f'Customer {customer.name} exceeded max_dogs_per_day ({max_dogs}) on {booking_date}'
+        )
+        raise BookingConflictError(
+            f'You have reached the maximum number of bookings ({max_dogs}) for this day. '
+            f'Please book on a different day or contact us for special arrangements.'
+        )
+
+    # Check if this customer already has this time slot booked
+    # If so, we still allow it because same-customer bookings are permitted
+    # as long as daily limit is not exceeded
 
 
 def _calculate_final_price(
@@ -389,6 +432,49 @@ def _calculate_final_price(
         raise ValidationError(f'Error calculating final price: {str(e)}')
 
 
+def ensure_customer_thread(user):
+    """Ensure customer has a message thread, create one if missing.
+
+    Args:
+        user: User object
+
+    Returns:
+        MessageThread: The existing or newly created thread
+    """
+    from mainapp.models import MessageThread, Message
+
+    # Check if user already has any threads
+    existing_thread = MessageThread.objects.filter(
+        customer=user,
+        is_active=True
+    ).first()
+
+    if existing_thread:
+        return existing_thread
+
+    # Create a new thread with a default subject
+    thread = MessageThread.objects.create(
+        customer=user,
+        subject='Appointment Inquiry'
+    )
+
+    # Create a welcome message from staff (admin)
+    from users.models import User
+    admin_user = User.objects.filter(
+        user_type='admin',
+        is_active=True
+    ).first()
+
+    if admin_user:
+        Message.objects.create(
+            thread=thread,
+            sender=admin_user,
+            content='Welcome! Feel free to ask questions about your upcoming appointment or any other grooming services.'
+        )
+
+    return thread
+
+
 def _create_appointment(
     customer: Customer,
     service: Service,
@@ -403,6 +489,7 @@ def _create_appointment(
     final_price: Decimal,
     user=None,
     preferred_groomer: Optional[Groomer] = None,
+    agreement_version: Optional[LegalAgreement] = None,
 ) -> Appointment:
     """Create and save an appointment.
 
@@ -420,6 +507,7 @@ def _create_appointment(
         final_price: Calculated final price
         user: Optional User object for registered customers (None for guest bookings)
         preferred_groomer: Optional Preferred Groomer object (may differ from actual groomer)
+        agreement_version: Optional LegalAgreement object for tracking customer agreement acceptance
 
     Returns:
         Appointment: The created appointment
@@ -428,22 +516,36 @@ def _create_appointment(
         DatabaseError: If database operation fails
     """
     try:
-        return Appointment.objects.create(
-            customer=customer,
-            user=user,
-            service=service,
-            groomer=groomer,
-            preferred_groomer=preferred_groomer,
-            dog_breed=breed,
-            dog_name=dog_name,
-            dog_weight=dog_weight,
-            dog_age=dog_age,
-            date=booking_date,
-            time=booking_time,
-            notes=notes,
-            price_at_booking=final_price,
-            status='pending'
-        )
+        # Prepare appointment data
+        appointment_data = {
+            'customer': customer,
+            'user': user,
+            'service': service,
+            'groomer': groomer,
+            'preferred_groomer': preferred_groomer,
+            'dog_breed': breed,
+            'dog_name': dog_name,
+            'dog_weight': dog_weight,
+            'dog_age': dog_age,
+            'date': booking_date,
+            'time': booking_time,
+            'notes': notes,
+            'price_at_booking': final_price,
+            'status': 'pending'
+        }
+
+        # Add agreement version and accepted timestamp if agreement was signed
+        if agreement_version:
+            appointment_data['agreement_version'] = agreement_version
+            appointment_data['agreement_accepted_at'] = timezone.now()
+
+        appointment = Appointment.objects.create(**appointment_data)
+
+        # Create a message thread for registered customers if they don't have one
+        if user and user.user_type == 'customer':
+            ensure_customer_thread(user)
+
+        return appointment
     except DatabaseError as e:
         logger.error(f'Database error creating appointment: {str(e)}')
         raise

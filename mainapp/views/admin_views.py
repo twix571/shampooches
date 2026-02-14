@@ -3,7 +3,7 @@
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from mainapp.models import Customer, Groomer, SiteConfig
+from mainapp.models import Customer, Groomer, SiteConfig, LegalAgreement
 from mainapp.utils import admin_required
 
 
@@ -49,3 +49,20 @@ def site_config_modal(request):
     """
     site_config = SiteConfig.get_active_config()
     return render(request, 'mainapp/admin/site_config_modal.html', {'site_config': site_config})
+
+
+@admin_required
+def legal_agreements_modal(request):
+    """
+    Render the legal agreements modal.
+
+    Displays all legal agreement versions with the active one highlighted.
+    Staff can create, edit, and manage agreement versions.
+    """
+    active_agreement = LegalAgreement.get_active_agreement()
+    agreements = LegalAgreement.objects.all().order_by('-effective_date')
+    return render(request, 'mainapp/admin/legal_agreements_modal.html', {
+        'active_agreement': active_agreement,
+        'agreements': agreements,
+        'agreement_count': agreements.count()
+    })

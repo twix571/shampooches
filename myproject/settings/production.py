@@ -39,8 +39,9 @@ EMAIL_TIMEOUT = 30
 EMAIL_HOST_USER = None
 EMAIL_HOST_PASSWORD = None
 
-# Production-specific email settings
-EMAIL_SUBJECT_PREFIX = '[Shampooches] '
+# Production-specific email settings (use constants for fallback)
+from mainapp.constants import BusinessInfo
+EMAIL_SUBJECT_PREFIX = f'[{BusinessInfo.BUSINESS_NAME}] '
 
 DEBUG = False
 

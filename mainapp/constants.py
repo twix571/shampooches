@@ -24,6 +24,10 @@ class AppointmentStatus:
     # Active statuses for booking conflicts
     ACTIVE_STATUSES = [PENDING, CONFIRMED]
 
+    # Blocking statuses for time slot availability
+    # These statuses block time slots from being rebooked
+    BLOCKING_STATUSES = [PENDING, CONFIRMED, COMPLETED]
+
     # Status display mapping
     DISPLAY_MAPPING = {
         PENDING: 'Pending',
@@ -42,6 +46,11 @@ class AppointmentStatus:
         """Check if a status represents an active appointment."""
         return status in cls.ACTIVE_STATUSES
 
+    @classmethod
+    def is_blocking(cls, status):
+        """Check if a status blocks time slot availability."""
+        return status in cls.BLOCKING_STATUSES
+
 
 # ============================================================================
 # USER TYPE CONSTANTS
@@ -50,14 +59,15 @@ class AppointmentStatus:
 class UserType:
     """Constants for user profile types."""
     ADMIN = 'admin'
+    GROOMER_MANAGER = 'groomer_manager'
     GROOMER = 'groomer'
     CUSTOMER = 'customer'
 
     # Valid user types
-    VALID_TYPES = [ADMIN, GROOMER, CUSTOMER]
+    VALID_TYPES = [ADMIN, GROOMER_MANAGER, GROOMER, CUSTOMER]
 
     # Types that can access admin features
-    ADMIN_ACCESS_TYPES = [ADMIN, GROOMER]
+    ADMIN_ACCESS_TYPES = [ADMIN, GROOMER_MANAGER, GROOMER]
 
     @classmethod
     def is_valid(cls, user_type):
@@ -262,6 +272,31 @@ class SuccessMessages:
     TIME_SLOTS_CREATED = 'Created {count} time slots'
     TIME_SLOTS_DELETED = 'Deleted {count} time slot(s)'
     TIME_SLOTS_SET = 'Set {count} time slots for {date}'
+
+
+# ============================================================================
+# BUSINESS INFORMATION DEFAULTS
+# ============================================================================
+
+class BusinessInfo:
+    """Default business information constants for fallback values."""
+    # Business name default
+    BUSINESS_NAME = 'Shampooches'
+
+    # Default email addresses
+    DEFAULT_FROM_EMAIL = 'noreply@shampooches.com'
+    SERVER_EMAIL = 'admin@shampooches.com'
+
+    # Email subject prefix
+    EMAIL_SUBJECT_PREFIX = '[Shampooches] '
+
+    # About modal default description
+    ABOUT_DESCRIPTION = 'Exceptional grooming services for dogs. Our certified groomers are passionate about making every dog look and feel their best.'
+
+    # Contact information defaults
+    DEFAULT_ADDRESS = '123 Groom Street, Pet City, PC 12345'
+    DEFAULT_PHONE = '(555) 123-4567'
+    DEFAULT_CONTACT_EMAIL = 'hello@shampooches.com'
 
 
 # ============================================================================

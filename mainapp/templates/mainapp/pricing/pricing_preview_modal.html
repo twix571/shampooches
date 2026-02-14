@@ -4,7 +4,7 @@
         <div>
             <h2 class="text-2xl font-semibold text-gray-800">Pricing Table: {{ breed.name }}</h2>
             {% if breed.pricing_cloned_from %}
-            <p class="text-sm text-amber-600 mt-1 flex items-center">
+            <p class="text-sm text-gold-600 mt-1 flex items-center">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
@@ -28,17 +28,17 @@
     </div>
 
     <!-- Breed Base Price Section -->
-    <div class="bg-teal-50 border border-teal-100 rounded-lg p-4 mb-6">
+    <div class="bg-gold-100 border border-gold-200 rounded-lg p-4 mb-6">
         <div class="flex items-center justify-between">
             <div>
                 <h3 class="text-lg font-semibold text-gray-800">Breed Base Price</h3>
                 <p class="text-sm text-gray-600">Starting price for services requiring bath/grooming (e.g., Full Groom, Bath & Brush)</p>
             </div>
             <div id="base-price-display" class="flex items-center gap-4">
-                <div class="text-2xl font-bold text-teal-700">
+                <div class="text-2xl font-bold text-gold-700">
                     ${{ breed.base_price|default:"0.00"|floatformat:2 }}
                 </div>
-                <button onclick="showBasePriceEdit()" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-700 transition text-sm">
+                <button onclick="showBasePriceEdit()" class="px-4 py-2 bg-gold-1000 text-white rounded-lg hover:bg-gold-700 transition text-sm">
                     Edit Price
                 </button>
             </div>
@@ -46,10 +46,10 @@
                 <div class="flex-1 flex items-center gap-4">
                     <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Base Price ($)</label>
-                        <input type="number" step="0.01" min="0" id="base-price-input" value="{{ breed.base_price|default:"0.00"|floatformat:2 }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                        <input type="number" step="0.01" min="0" id="base-price-input" value="{{ breed.base_price|default:"0.00"|floatformat:2 }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-1000 focus:border-transparent outline-none">
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="saveBasePrice()" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-700 transition">
+                        <button onclick="saveBasePrice()" class="px-4 py-2 bg-gold-1000 text-white rounded-lg hover:bg-gold-700 transition">
                             Save
                         </button>
                         <button onclick="cancelBasePriceEdit()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
@@ -62,10 +62,10 @@
     </div>
 
     <!-- Weight Pricing Configuration -->
-    <div class="bg-teal-50 border border-teal-100 rounded-lg p-4 mb-6">
+    <div class="bg-gold-100 border border-gold-200 rounded-lg p-4 mb-6">
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-lg font-semibold text-gray-800">Weight Pricing Formula</h3>
-            <button onclick="openWeightRangesEditor()" class="text-sm text-teal-600 hover:text-teal-700 underline">
+            <button onclick="openWeightRangesEditor()" class="text-sm text-gold-600 hover:text-gold-700 underline">
                 Edit Weight Pricing
             </button>
         </div>
@@ -94,7 +94,7 @@
                     <th class="bg-gray-100 border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[140px]">
                         <div>{{ service.name }}</div>
                         {% if service.exempt_from_surcharge %}
-                        <div class="text-xs text-teal-600 font-normal">(Exempt from surcharge)</div>
+                        <div class="text-xs text-gold-600 font-normal">(Exempt from surcharge)</div>
                         {% endif %}
                     </th>
                     {% endfor %}
@@ -109,11 +109,11 @@
                         {% for service in services %}
                         {% if sample.weight == breed.start_weight %}
                         {% with surcharge=pricing_data.weight_surcharge %}
-                        <div class="text-xs text-teal-600 mt-1">No surcharge</div>
+                        <div class="text-xs text-gold-600 mt-1">No surcharge</div>
                         {% endwith %}
                         {% else %}
                         {% with weight_info=pricing_matrix|get_item:service.id|get_item:sample.key %}
-                        <div class="text-xs text-teal-600 mt-1">+${{ weight_info.weight_surcharge|floatformat:2 }} surcharge</div>
+                        <div class="text-xs text-gold-600 mt-1">+${{ weight_info.weight_surcharge|floatformat:2 }} surcharge</div>
                         {% endwith %}
                         {% endif %}
                         {% endfor %}
@@ -146,7 +146,7 @@
             </svg>
             <p class="text-lg font-medium mb-2">No pricing data available</p>
             <p class="text-sm mb-4">Configure weight pricing for this breed to see the complete pricing table.</p>
-            <button onclick="openWeightRangesEditor()" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-700 transition">
+            <button onclick="openWeightRangesEditor()" class="px-4 py-2 bg-gold-1000 text-white rounded-lg hover:bg-gold-700 transition">
                 Configure Weight Pricing
             </button>
         </div>
@@ -154,7 +154,7 @@
     {% endif %}
 
     <div class="flex justify-end gap-3 mt-6">
-        <button onclick="showClonePricingModal()" class="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 transition flex items-center">
+        <button onclick="showClonePricingModal()" class="px-4 py-2 bg-gold-2000 text-white rounded hover:bg-gold-600 transition flex items-center">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
             </svg>
@@ -249,18 +249,18 @@ function showClonePricingModal() {
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Clone pricing configuration to this breed from:</label>
-                    <select id="source-breed-select" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    <select id="source-breed-select" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gold-1000">
                         <option value="">Select a breed...</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Clone Note (optional)</label>
-                    <input type="text" id="clone-note-input" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Why clone this pricing?">
+                    <input type="text" id="clone-note-input" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gold-1000" placeholder="Why clone this pricing?">
                 </div>
             </div>
             <div class="flex justify-end gap-3 mt-6">
                 <button onclick="closeCloneModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition">Cancel</button>
-                <button onclick="executeClone()" class="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 transition">Clone</button>
+                <button onclick="executeClone()" class="px-4 py-2 bg-gold-2000 text-white rounded hover:bg-gold-600 transition">Clone</button>
             </div>
         </div>
     `;

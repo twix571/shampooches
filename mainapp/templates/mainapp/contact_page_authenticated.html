@@ -1,0 +1,168 @@
+{% extends "mainapp/base.html" %}
+{% load static %}
+
+{% block title %}Contact Us - {{ site_config.business_name|default:"Shampooches" }}{% endblock %}
+
+{% block content %}
+{% include "mainapp/partials/customer_nav.html" %}
+<div class="hidden"><meta name="current-username" content="{{ user.username }}"></div>
+<div class="min-h-screen bg-gold-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Contact Us</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Threads List -->
+            <div class="lg:col-span-1 bg-white rounded-lg shadow-sm">
+                <div class="p-4 border-b border-gray-200">
+                    <h2 class="font-semibold text-gray-800 mb-2">Your Conversations</h2>
+                    <button onclick="openNewThreadModal()" class="text-sm text-gold-600 hover:text-gold-700 font-medium">
+                        + Start New Conversation
+                    </button>
+                </div>
+
+                <div class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto" id="threads-list">
+                    {% for thread in threads %}
+                    <button onclick="selectThread({{ thread.id }})" class="w-full text-left p-4 hover:bg-gray-50 transition focus:outline-none focus:bg-gray-100" data-thread-id="{{ thread.id }}">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-800 truncate">{{ thread.subject }}</p>
+                                {% with thread.get_last_message as last_msg %}
+                                    <p class="text-sm text-gray-500 truncate">
+                                        {% if last_msg %}{{ last_msg.content|truncatewords:8 }}{% else %}No messages{% endif %}
+                                    </p>
+                                {% endwith %}
+                            </div>
+                            <div class="ml-2 flex-shrink-0">
+                                <span class="text-xs text-gray-400">
+                                    {% with thread.get_last_message as last_msg %}
+                                        {% if last_msg %}{{ last_msg.created_at|date:"M j, g:i a" }}{% endif %}
+                                    {% endwith %}
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+                    {% empty %}
+                    <div class="p-4 text-center text-gray-500">
+                        <p>No conversations yet.</p>
+                        <button onclick="openNewThreadModal()" class="text-gold-600 hover:text-gold-700 text-sm font-medium mt-2">
+                            Start your first conversation
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-sm flex flex-col" style="min-height: 500px;">
+                <!-- Thread Header -->
+                <div id="thread-header" class="hidden p-4 border-b border-gray-200">
+                    <h2 id="thread-subject" class="font-semibold text-gray-800 mb-1"></h2>
+                    <div id="active-viewers" class="text-sm text-gray-600"></div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-8">
+                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Select a conversation</h3>
+                    <p class="text-gray-500 text-center">Choose a conversation from the list to view messages or start a new conversation.</p>
+                    <button onclick="openNewThreadModal()" class="mt-4 px-4 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-700 transition text-sm font-medium">
+                        Start New Conversation
+                    </button>
+                </div>
+
+                <!-- Messages List -->
+                <div id="messages-list" class="hidden flex-1 overflow-y-auto p-4 space-y-4" style="min-height: 300px;"></div>
+
+                <!-- Typing Indicator -->
+                <div id="typing-indicator" class="hidden px-4 py-2 bg-gray-50 text-sm text-gray-600 italic"></div>
+
+                <!-- Message Input -->
+                <div id="message-input-area" class="hidden border-t border-gray-200 p-4">
+                    <form id="message-form" class="flex gap-2">
+                        <input
+                            type="text"
+                            name="message"
+                            id="message-input"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
+                            placeholder="Type your message..."
+                            autocomplete="off"
+                            required
+                        >
+                        <button type="submit" class="px-6 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-700 transition font-medium">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Thread Modal -->
+    <div id="new-thread-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                <h3 class="font-semibold text-gray-800">Start New Conversation</h3>
+                <button onclick="closeNewThreadModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="new-thread-form" class="p-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <input
+                        type="text"
+                        name="subject"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
+                        placeholder="What's this about?"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                    <textarea
+                        name="message"
+                        required
+                        rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 resize-none"
+                        placeholder="How can we help you today?"
+                    ></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Send to</label>
+                    <select
+                        name="recipient"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
+                    >
+                        {% for staff in available_staff %}
+                        <option value="{{ staff.username }}">{{ staff.username }} ({{ staff.user_type|title }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                    <textarea
+                        name="message"
+                        required
+                        rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 resize-none"
+                        placeholder="How can we help you today?"
+                    ></textarea>
+                </div>
+                {% csrf_token %}
+                <button type="submit" class="w-full px-4 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-700 transition font-medium">
+                    Start Conversation
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+
+<script src="{% static 'js/contact-messaging.js' %}"></script>
+{% endblock %}

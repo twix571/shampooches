@@ -4,7 +4,6 @@ from datetime import datetime
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
-from django.views.decorators.csrf import csrf_exempt
 
 from mainapp.models import Groomer, TimeSlot
 from mainapp.utils import admin_required
@@ -32,7 +31,6 @@ def time_slot_editor_modal(request):
     return render(request, 'mainapp/schedule_modal.html', {'date': date_str, 'day_name': day_name})
 
 
-@csrf_exempt
 @admin_required
 def render_groomer_options(request: HttpRequest) -> HttpResponse:
     """
@@ -48,7 +46,6 @@ def render_groomer_options(request: HttpRequest) -> HttpResponse:
     return render(request, 'mainapp/partials/groomer_options.html', context)
 
 
-@csrf_exempt
 @admin_required
 def render_time_slots(request: HttpRequest) -> HttpResponse:
     """

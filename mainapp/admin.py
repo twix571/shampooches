@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db import models
-from .models import Service, Customer, Appointment, Groomer, Breed, BreedServiceMapping, SiteConfig
+from .models import Service, Customer, Appointment, Groomer, Breed, BreedServiceMapping, SiteConfig, LegalAgreement
 
 
 class BreedServiceMappingInline(admin.TabularInline):
@@ -310,3 +310,43 @@ class SiteConfigAdmin(admin.ModelAdmin):
         count = queryset.update(is_active=False)
         self.message_user(request, f'{count} site configuration(s) marked as inactive.')
     mark_as_inactive.short_description = 'Mark as inactive'
+
+
+@admin.register(LegalAgreement)
+class LegalAgreementAdmin(admin.ModelAdmin):
+    """Admin interface for LegalAgreement model with version management."""
+
+    list_display = ['title', 'effective_date', 'is_active', 'appointment_count', 'created_at']
+    list_filter = ['is_active', 'effective_date', 'created_at']
+    search_fields = ['title', 'content']
+    ordering = ['-effective_date']
+    readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Agreement Details', {
+            'fields': ('title', 'content')
+        }),
+        ('Settings', {
+            'fields': ('effective_date', 'is_active')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    actions = ['mark_as_active']
+
+    def mark_as_active(self, request, queryset):
+        """Mark selected agreement as the active version (only one can be active)."""
+        # Ensure only one agreement is active at a time
+        LegalAgreement.objects.update(is_active=False)
+        count = queryset.update(is_active=True)
+        self.message_user(request, f'{count} agreement version(s) marked as active. Note: Only the most recent selection remains active.')
+    mark_as_active.short_description = 'Mark as active (deactivates others)'
+
+    def appointment_count(self, obj):
+        """Count number of appointments signed with this agreement."""
+        count = obj.appointments.count()
+        return count
+    appointment_count.short_description = 'Signed Appointments'

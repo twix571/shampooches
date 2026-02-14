@@ -11,8 +11,6 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponseBase, JsonResponse
 from django.shortcuts import redirect
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 
 
 class LoginRequiredMixin:
@@ -109,17 +107,8 @@ class GroomerRequiredMixin:
             from django.contrib.auth.views import redirect_to_login
             return redirect_to_login(request.get_full_path())
 
-        try:
-            profile = request.user.profile
-            user_type = profile.user_type
-        except AttributeError:
-            messages.error(
-                request,
-                'Your account is not properly configured. Please contact support.'
-            )
-            return redirect(self.login_url)
-
-        if user_type not in ['admin', 'groomer']:
+        user_type = getattr(request.user, 'user_type', None)
+        if user_type not in ['admin', 'groomer_manager', 'groomer']:
             messages.error(
                 request,
                 'You do not have permission to access this page.'
@@ -184,18 +173,6 @@ class JsonRequestMixin:
                 status=400
             )
         return True, None
-
-
-class CsrfExemptMixin:
-    """Mixin that CSRF-exempts views.
-
-    Use with caution - only for API endpoints that don't use cookies.
-    """
-
-    @method_decorator(csrf_exempt)
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
-        """Dispatch method with CSRF exemption."""
-        return super().dispatch(request, *args, **kwargs)
 
 
 class FormValidationMixin:

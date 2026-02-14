@@ -503,6 +503,19 @@ class Appointment(models.Model):
         validators=[MinValueValidator(Decimal('0.00'))],
         help_text="Price at time of booking (for historical accuracy)"
     )
+    agreement_version = models.ForeignKey(
+        'LegalAgreement',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='appointments',
+        help_text="The legal agreement version the customer accepted"
+    )
+    agreement_accepted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the customer accepted the agreement"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -707,6 +720,43 @@ class DogDeletionRequest(models.Model):
         return f"Delete request for {self.dog.name} - {self.get_status_display()}"
 
 
+class LegalAgreement(models.Model):
+    """Model representing a legal agreement that customers must accept when booking."""
+
+    title = models.CharField(
+        max_length=200,
+        help_text="Title of the legal agreement"
+    )
+    content = models.TextField(
+        help_text="Full text of the legal agreement"
+    )
+    effective_date = models.DateField(
+        db_index=True,
+        help_text="Date when this agreement version becomes effective"
+    )
+    is_active = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Whether this is the currently active agreement version"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-effective_date']
+        verbose_name = 'Legal Agreement'
+        verbose_name_plural = 'Legal Agreements'
+
+    def __str__(self):
+        active_label = " [ACTIVE]" if self.is_active else ""
+        return f"{self.title}{active_label} - Effective {self.effective_date}"
+
+    @classmethod
+    def get_active_agreement(cls):
+        """Get the currently active legal agreement."""
+        return cls.objects.filter(is_active=True).first()
+
+
 class SiteConfig(models.Model):
     """Model representing site-wide configuration including business hours and contact info."""
 
@@ -761,6 +811,13 @@ class SiteConfig(models.Model):
     saturday_close = models.IntegerField(choices=BUSINESS_HOUR_CHOICES, default=17, help_text="Saturday closing time")
     sunday_open = models.IntegerField(choices=BUSINESS_HOUR_CHOICES, default=10, help_text="Sunday opening time")
     sunday_close = models.IntegerField(choices=BUSINESS_HOUR_CHOICES, default=16, help_text="Sunday closing time")
+
+    # Booking Configuration
+    max_dogs_per_day = models.IntegerField(
+        default=3,
+        validators=[MinValueValidator(1)],
+        help_text="Maximum number of dogs a customer can book in a single day"
+    )
 
     is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -820,3 +877,155 @@ class SiteConfig(models.Model):
                 raise ValidationError(
                     {f'{day_name.lower()}_close': f'{day_name} closing time must be after opening time.'}
                 )
+
+
+class MessageThread(models.Model):
+    """Model representing a conversation thread between a customer and staff."""
+
+    customer = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='customer_threads',
+        db_index=True,
+        help_text="Customer user who initiated this thread"
+    )
+    subject = models.CharField(
+        max_length=200,
+        help_text="Subject/topic of this conversation"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="Whether this thread is active (can receive new messages)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = 'Message Thread'
+        verbose_name_plural = 'Message Threads'
+
+    def __str__(self):
+        return f"{self.customer.username} - {self.subject}"
+
+    def get_last_message(self):
+        """Get the most recent message in this thread."""
+        return self.messages.order_by('-created_at').first()
+
+
+class Message(models.Model):
+    """Model representing an individual message in a thread."""
+
+    thread = models.ForeignKey(
+        MessageThread,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        db_index=True,
+        help_text="Thread this message belongs to"
+    )
+    sender = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='sent_messages',
+        db_index=True,
+        help_text="User who sent this message"
+    )
+    content = models.TextField(
+        help_text="Message content"
+    )
+    is_read = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Whether this message has been read by recipients"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Message'
+        verbose_name_plural = 'Messages'
+
+    def __str__(self):
+        preview = self.content[:50] + "..." if len(self.content) > 50 else self.content
+        return f"{self.sender.username}: {preview}"
+
+
+class ThreadView(models.Model):
+    """Model tracking which users are currently viewing a message thread."""
+
+    thread = models.ForeignKey(
+        MessageThread,
+        on_delete=models.CASCADE,
+        related_name='active_views',
+        db_index=True,
+        help_text="Thread being viewed"
+    )
+    user = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='thread_views',
+        db_index=True,
+        help_text="User viewing the thread"
+    )
+    last_seen_at = models.DateTimeField(
+        auto_now=True,
+        help_text="Last time this user was confirmed to be viewing the thread"
+    )
+
+    class Meta:
+        unique_together = ['thread', 'user']
+        verbose_name = 'Thread View'
+        verbose_name_plural = 'Thread Views'
+
+    def __str__(self):
+        return f"{self.user.username} viewing {self.thread.subject}"
+
+    @classmethod
+    def get_active_viewers(cls, thread, timeout_seconds=30):
+        """Get active viewers for a thread (those who've been active within timeout)."""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        cutoff_time = timezone.now() - timedelta(seconds=timeout_seconds)
+        return cls.objects.filter(thread=thread, last_seen_at__gte=cutoff_time).select_related('user')
+
+
+class TypingIndicator(models.Model):
+    """Model tracking which users are currently typing in a message thread."""
+
+    thread = models.ForeignKey(
+        MessageThread,
+        on_delete=models.CASCADE,
+        related_name='typing_indicators',
+        db_index=True,
+        help_text="Thread where typing is happening"
+    )
+    user = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='typing_activity',
+        db_index=True,
+        help_text="User who is typing"
+    )
+    last_typed_at = models.DateTimeField(
+        auto_now=True,
+        help_text="Last time this user was confirmed to be typing"
+    )
+
+    class Meta:
+        unique_together = ['thread', 'user']
+        verbose_name = 'Typing Indicator'
+        verbose_name_plural = 'Typing Indicators'
+
+    def __str__(self):
+        return f"{self.user.username} typing in {self.thread.subject}"
+
+    @classmethod
+    def get_active_typers(cls, thread, timeout_seconds=5):
+        """Get active typers for a thread (those who've been typing within timeout)."""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        cutoff_time = timezone.now() - timedelta(seconds=timeout_seconds)
+        return cls.objects.filter(thread=thread, last_typed_at__gte=cutoff_time).select_related('user')

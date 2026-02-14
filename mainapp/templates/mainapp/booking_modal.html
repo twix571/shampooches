@@ -1,28 +1,7 @@
 {% load static %}
 <div id="booking-modal">
-    <!-- Pass preloaded data to JavaScript -->
-    {% if preloaded_dog %}
-        <script>
-            window.preloadedDog = {
-                id: {{ preloaded_dog.id }},
-                name: "{{ preloaded_dog.name|escapejs }}",
-                breed_id: {{ preloaded_dog.breed_id|default:'null' }},
-                breed_name: "{{ preloaded_dog.breed_name|default:''|escapejs }}",
-                weight: {{ preloaded_dog.weight|default:'null' }},
-                age: "{{ preloaded_dog.age|default:''|escapejs }}",
-                notes: "{{ preloaded_dog.notes|default:''|escapejs }}"
-            };
-        </script>
-    {% endif %}
-    {% if preloaded_customer %}
-        <script>
-            window.preloadedCustomer = {
-                name: "{{ preloaded_customer.name|escapejs }}",
-                email: "{{ preloaded_customer.email|escapejs }}",
-                phone: "{{ preloaded_customer.phone|escapejs }}"
-            };
-        </script>
-    {% endif %}
+    <!-- Preloaded data as JSON from server -->
+    <script id="booking-modal-preloaded-data" type="application/json">{{ preloaded_data_json|safe }}</script>
 
     <!-- Header -->
     <div class="flex justify-between items-center mb-6 px-8 pt-8">
@@ -36,62 +15,56 @@
 
     <!-- Progress Indicator -->
     <div class="px-8 mb-6">
-        <div class="flex" id="progress-steps" style="--circle-size: 3.5rem; --spacing: 0.75rem;">
-            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
-                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 text-white" data-step="1" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(20 184 166);">1</div>
-                <span class="text-xs text-gray-500">Groomer</span>
+        <div class="flex justify-between">
+            <div class="step-item flex flex-col items-center" data-step="1">
+                <span class="step-num text-black font-bold text-lg">1</span>
+                <span class="step-check hidden text-gold-500 font-bold text-lg">✓</span>
+                <span class="step-label text-xs font-bold text-black">Groomer</span>
             </div>
-            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
-                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="2" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">2</div>
-                <span class="text-xs text-gray-500">Breed</span>
+            <div class="step-item flex flex-col items-center" data-step="2">
+                <span class="step-num text-black font-bold text-lg">2</span>
+                <span class="step-check hidden text-gold-500 font-bold text-lg">✓</span>
+                <span class="step-label text-xs font-bold text-black">Breed</span>
             </div>
-            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
-                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="3" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">3</div>
-                <span class="text-xs text-gray-500">Age</span>
+            <div class="step-item flex flex-col items-center" data-step="3">
+                <span class="step-num text-black font-bold text-lg">3</span>
+                <span class="step-check hidden text-gold-500 font-bold text-lg">✓</span>
+                <span class="step-label text-xs font-bold text-black">Age</span>
             </div>
-            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
-                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="4" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">4</div>
-                <span class="text-xs text-gray-500">Day</span>
+            <div class="step-item flex flex-col items-center" data-step="4">
+                <span class="step-num text-black font-bold text-lg">4</span>
+                <span class="step-check hidden text-gold-500 font-bold text-lg">✓</span>
+                <span class="step-label text-xs font-bold text-black">Day</span>
             </div>
-            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
-                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="5" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">5</div>
-                <span class="text-xs text-gray-500">Time</span>
+            <div class="step-item flex flex-col items-center" data-step="5">
+                <span class="step-num text-black font-bold text-lg">5</span>
+                <span class="step-check hidden text-gold-500 font-bold text-lg">✓</span>
+                <span class="step-label text-xs font-bold text-black">Time</span>
             </div>
-            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
-                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="6" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">6</div>
-                <span class="text-xs text-gray-500">Review</span>
+            <div class="step-item flex flex-col items-center" data-step="6">
+                <span class="step-num text-black font-bold text-lg">6</span>
+                <span class="step-check hidden text-gold-500 font-bold text-lg">✓</span>
+                <span class="step-label text-xs font-bold text-black">Agreement</span>
             </div>
-            <div class="step-item flex flex-col flex-1 items-center text-center relative" style="padding-bottom: 0.5rem;">
-                <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xl font-bold mb-2 bg-gray-200 text-gray-600" data-step="7" style="width: var(--circle-size); height: var(--circle-size); background-color: rgb(229 231 235);">7</div>
-                <span class="text-xs text-gray-500">Done</span>
+            <div class="step-item flex flex-col items-center" data-step="7">
+                <span class="step-num text-black font-bold text-lg">7</span>
+                <span class="step-check hidden text-gold-500 font-bold text-lg">✓</span>
+                <span class="step-label text-xs font-bold text-black">Review</span>
             </div>
-            <style>
-                .step-item::after {
-                    content: "";
-                    position: relative;
-                    top: calc(var(--circle-size) / 2);
-                    width: calc(100% - var(--circle-size) - calc(var(--spacing) * 2));
-                    left: calc(50% + calc(var(--circle-size) / 2 + var(--spacing)));
-                    height: 2px;
-                    background-color: rgb(229 231 235);
-                    order: -1;
-                    z-index: -1;
-                    transition: background-color 0.3s ease;
-                }
-                .step-item:last-child::after {
-                    display: none;
-                }
-                .step-item.line-green::after {
-                    background-color: rgb(34 197 94);
-                }
-            </style>
+            <div class="step-item flex flex-col items-center" data-step="8">
+                <span class="step-num text-black font-bold text-lg">8</span>
+                <span class="step-check hidden text-gold-500 font-bold text-lg">✓</span>
+                <span class="step-label text-xs font-bold text-black">Done</span>
+            </div>
+        </div>
+    </div>
         </div>
     </div>
 
     <!-- Loading State -->
     <div id="loading-state" class="px-8 py-12">
         <div class="flex justify-center items-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500"></div>
             <span class="ml-2 text-gray-600">Loading...</span>
         </div>
     </div>
@@ -107,7 +80,6 @@
         <!-- Step 1: Select Groomer -->
     <div id="step-1" class="booking-step px-8 pb-8 hidden">
         <p class="text-gray-600 mb-2">Select a preferred groomer for your appointment.</p>
-        <p class="text-sm text-gray-500 mb-6 italic">Note: This is a preference, not guaranteed. If your preferred groomer is unavailable, we'll show you alternatives.</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="groomers-list">
             <!-- Groomer cards will be rendered here -->
         </div>
@@ -116,22 +88,31 @@
     <!-- Step 2: Select Breed & Weight -->
     <div id="step-2" class="booking-step px-8 pb-8 hidden">
         <p class="text-gray-600 mb-6">Select your dog's breed and enter their weight.</p>
+
         <div class="space-y-6">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Dog's Breed</label>
-                <select id="breed-select" onchange="window.BookingModal.onBreedChange()" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                <div class="flex items-center gap-4 mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Dog's Breed</label>
+                    <!-- Saved Dogs Section -->
+                    <div id="saved-dogs-section" class="hidden">
+                        <div id="saved-dogs-list" class="flex flex-wrap gap-2">
+                            <!-- Dog names will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+                <select id="breed-select" onchange="window.BookingModal.onBreedChange()" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none">
                     <option value="">Select breed...</option>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Dog's Weight (lbs)</label>
-                <input type="number" id="dog-weight" step="0.01" min="0" oninput="window.BookingModal.updatePricePreview()" placeholder="Enter exact weight" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                <input type="number" id="dog-weight" step="0.01" min="0" oninput="window.BookingModal.updatePricePreview()" placeholder="Enter exact weight" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Dog's Name</label>
-                <input type="text" id="dog-name" oninput="window.BookingModal.updatePricePreview()" placeholder="Enter your dog's name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                <input type="text" id="dog-name" oninput="window.BookingModal.updatePricePreview()" placeholder="Enter your dog's name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none">
             </div>
-            <div id="price-preview-container" class="bg-teal-50 border border-teal-200 rounded-lg p-4 hidden">
+            <div id="price-preview-container" class="bg-gold-100 border border-gold-100 rounded-lg p-4 hidden">
                 <div class="text-sm text-gray-600 mb-2">Price Preview (per service):</div>
                 <div class="space-y-2" id="price-preview-list"></div>
                 <div id="price-preview-error" class="text-red-600 text-sm mt-2 hidden"></div>
@@ -144,7 +125,7 @@
         <p class="text-gray-600 mb-6">How old is your dog?</p>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Dog's Age</label>
-            <input type="text" id="dog-age" placeholder="e.g., 2 years, 6 months" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+            <input type="text" id="dog-age" placeholder="e.g., 2 years, 6 months" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none">
         </div>
     </div>
 
@@ -154,7 +135,7 @@
 
         <!-- Loading state for days -->
         <div id="days-loading" class="hidden flex justify-center items-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500"></div>
             <span class="ml-2 text-gray-600">Loading available days...</span>
         </div>
 
@@ -180,7 +161,7 @@
 
         <!-- Loading state for time slots -->
         <div id="slots-loading" class="hidden flex justify-center items-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500"></div>
             <span class="ml-2 text-gray-600">Loading available times...</span>
         </div>
 
@@ -198,7 +179,7 @@
         <!-- Primary slots section -->
         <div id="primary-slots-section" class="mb-6">
             <h3 id="primary-slots-title" class="text-sm font-semibold text-gray-700 mb-3 hidden">
-                Available with <span id="primary-groomer-name" class="text-teal-600"></span>
+                Available with <span id="primary-groomer-name" class="text-gold-600"></span>
             </h3>
             <div class="grid grid-cols-3 md:grid-cols-4 gap-3" id="primary-time-slots-list">
                 <!-- Primary time slots will be rendered here -->
@@ -219,13 +200,39 @@
         </div>
     </div>
 
-    <!-- Step 6: Select Service & Review -->
+    <!-- Step 6: Legal Agreement -->
     <div id="step-6" class="booking-step px-8 pb-8 hidden">
+        <p class="text-gray-600 mb-4">Please review and accept the legal agreement to proceed.</p>
+        
+        <div id="agreement-loading" class="flex justify-center items-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500"></div>
+            <span class="ml-2 text-gray-600">Loading agreement...</span>
+        </div>
+        
+        <div id="agreement-container" class="hidden">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-4 max-h-64 overflow-y-auto">
+                <h3 class="font-semibold text-gray-800 mb-2" id="agreement-title"></h3>
+                <div class="text-sm text-gray-700 whitespace-pre-wrap" id="agreement-content"></div>
+            </div>
+            <label class="flex items-start space-x-3 cursor-pointer mb-2">
+                <input type="checkbox" id="agreement-accepted" class="mt-1 w-5 h-5 text-gold-500 border-gray-300 rounded focus:ring-gold-500">
+                <span class="text-sm text-gray-700">I have read and agree to the above terms and conditions</span>
+            </label>
+            <p id="agreement-error" class="text-red-500 text-sm hidden">You must accept the agreement to continue</p>
+        </div>
+        
+        <div id="no-agreement-container" class="hidden">
+            <p class="text-green-600">No agreement required for this booking.</p>
+        </div>
+    </div>
+
+    <!-- Step 7: Select Service & Review -->
+    <div id="step-7" class="booking-step px-8 pb-8 hidden">
         <p class="text-gray-600 mb-6">Select a service and review your appointment details.</p>
         <div class="space-y-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Select Service</label>
-                <select id="service-select" onchange="window.BookingModal.updateSummary()" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                <select id="service-select" onchange="window.BookingModal.updateSummary()" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none">
                     <option value="">Select service...</option>
                 </select>
             </div>
@@ -275,31 +282,31 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-                <input type="text" id="customer-name" oninput="window.BookingModal.updateSummary()" placeholder="Enter your full name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                <input type="text" id="customer-name" oninput="window.BookingModal.updateSummary()" placeholder="Enter your full name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                <input type="tel" id="customer-phone" oninput="window.BookingModal.updateSummary()" placeholder="Enter your phone number" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                <input type="tel" id="customer-phone" oninput="window.BookingModal.updateSummary()" placeholder="Enter your phone number" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input type="email" id="customer-email" oninput="window.BookingModal.updateSummary()" placeholder="Enter your email address" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
+                <input type="email" id="customer-email" oninput="window.BookingModal.updateSummary()" placeholder="Enter your email address" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Notes (optional)</label>
-                <textarea id="customer-notes" oninput="window.BookingModal.updateSummary()" placeholder="Any special requests or notes (optional)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none" rows="3"></textarea>
+                <textarea id="customer-notes" oninput="window.BookingModal.updateSummary()" placeholder="Any special requests or notes (optional)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none" rows="3"></textarea>
             </div>
         </div>
     </div>
 
-    <!-- Step 7: Confirmation -->
-    <div id="step-7" class="booking-step px-8 pb-8 hidden">
+    <!-- Step 8: Confirmation -->
+    <div id="step-8" class="booking-step px-8 pb-8 hidden">
         <div class="text-center py-12">
-            <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-16 h-16 bg-gold-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
             </div>
@@ -354,18 +361,23 @@
                     </div>
                 </div>
             </div>
-            <button onclick="closeModal()" class="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition">Close</button>
+            <button onclick="closeModal({success: true, modalType: 'booking', data: {appointmentId: window.BookingModal?.state?.confirmedAppointment?.id || null}})" class="bg-gold-500 text-white px-6 py-3 rounded-lg hover:bg-gold-700 transition">Close</button>
         </div>
     </div>
 
     <!-- Navigation Buttons -->
-    <div id="booking-nav-buttons" class="flex justify-end gap-3 px-8 pb-12 pt-4 hidden">
-        <button id="prev-button" onclick="window.BookingModal.previousStep()" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition hidden">
-            Previous
-        </button>
-        <button id="next-button" onclick="window.BookingModal.nextStep()" class="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-700 transition">
-            Next
-        </button>
+    <div class="px-8 pt-4 pb-4 flex justify-between items-end">
+        <div class="flex justify-start">
+            <p id="groomer-note" class="text-sm text-gray-500 italic hidden">Note: This is a preference, not guaranteed. If your preferred groomer is unavailable, we'll show you alternatives.</p>
+        </div>
+        <div id="booking-nav-buttons" class="flex justify-end gap-3 hidden">
+            <button id="prev-button" onclick="window.BookingModal.previousStep()" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition hidden">
+                Previous
+            </button>
+            <button id="next-button" onclick="window.BookingModal.nextStep()" class="px-6 py-3 bg-gold-500 text-white rounded-lg hover:bg-gold-700 transition">
+                Next
+            </button>
+        </div>
     </div>
 </div>
 
@@ -373,7 +385,7 @@
 window.BookingModal = (function() {
     let state = {
         currentStep: 1,
-        totalSteps: 7,
+        totalSteps: 8,
         loading: true,
         error: false,
         errorMessage: '',
@@ -381,6 +393,7 @@ window.BookingModal = (function() {
         groomers: [],
         services: [],
         breeds: [],
+        customerDogs: [],
         availableDays: [],
         timeSlots: [],
         primarySlots: [],
@@ -392,7 +405,9 @@ window.BookingModal = (function() {
         priceCalculationError: null,
         preferredGroomId: null,
         actualGroomId: null,
-        isOverrideSlot: false
+        isOverrideSlot: false,
+        agreementVersionId: null,
+        activeAgreement: null
     };
 
     const stepLabels = {
@@ -401,8 +416,9 @@ window.BookingModal = (function() {
         3: 'Age',
         4: 'Day',
         5: 'Time',
-        6: 'Review',
-        7: 'Done'
+        6: 'Agreement',
+        7: 'Review',
+        8: 'Done'
     };
 
     function getCsrfToken() {
@@ -436,12 +452,91 @@ window.BookingModal = (function() {
         state.breeds = data.data || [];
     }
 
+    async function loadCustomerDogs() {
+        try {
+            const response = await fetch('/api/v1/customer/dogs/');
+            const data = await response.json();
+
+            if (data.success) {
+                state.customerDogs = data.data.dogs || [];
+                renderSavedDogs();
+            }
+        } catch (error) {
+            console.error('Error loading customer dogs:', error);
+            state.customerDogs = [];
+        }
+    }
+
+    function renderSavedDogs() {
+        const container = document.getElementById('saved-dogs-list');
+        const section = document.getElementById('saved-dogs-section');
+
+        // Filter dogs that don't have active appointments
+        const availableDogs = state.customerDogs.filter(dog => !dog.has_active_appointment);
+
+        if (availableDogs.length === 0) {
+            section.classList.add('hidden');
+            container.innerHTML = '';
+            return;
+        }
+
+        section.classList.remove('hidden');
+
+        // Map dogs to HTML with separators
+        const dogButtons = availableDogs.map((dog, index) => {
+            const button = `<button onclick="window.BookingModal.selectDogProfile(${dog.id})"
+                     class="px-3 py-1.5 rounded-full text-sm font-medium text-gold-500 hover:text-gold-700 hover:bg-gold-50 transition">
+                ${dog.name}
+            </button>`;
+            // Add separator after button if not last
+            const separator = index < availableDogs.length - 1 ? '<div class="h-2.5 w-px bg-black mx-2 mt-3"></div>' : '';
+            return button + separator;
+        }).join('');
+
+        container.innerHTML = dogButtons;
+    }
+
+    function selectDogProfile(dogId) {
+        const dog = state.customerDogs.find(d => d.id === dogId);
+        if (!dog) return;
+
+        // Autofill breed
+        if (dog.breed_id) {
+            state.bookingData.breedId = dog.breed_id;
+            state.bookingData.breedName = dog.breed_name;
+            const breedSelect = document.getElementById('breed-select');
+            breedSelect.value = dog.breed_id;
+        }
+
+        // Autofill weight
+        if (dog.weight) {
+            state.bookingData.dogWeight = dog.weight.toString();
+            const weightInput = document.getElementById('dog-weight');
+            weightInput.value = dog.weight;
+        }
+
+        // Autofill name
+        state.bookingData.dogName = dog.name;
+        const nameInput = document.getElementById('dog-name');
+        nameInput.value = dog.name;
+
+        // Autofill age (optional)
+        if (dog.age) {
+            state.bookingData.dogAge = dog.age;
+            const ageInput = document.getElementById('dog-age');
+            ageInput.value = dog.age;
+        }
+
+        // Update price preview
+        updatePricePreview();
+    }
+
     function renderGroomers() {
         const container = document.getElementById('groomers-list');
         container.innerHTML = state.groomers.map(groomer => `
             <div onclick="window.BookingModal.groomer(${groomer.id}, '${groomer.name}', this)"
                  id="groomer-${groomer.id}"
-                 class="groomer-card border rounded-lg p-4 cursor-pointer transition border-gray-200 hover:border-teal-500 hover:shadow-md">
+                 class="groomer-card border rounded-lg p-4 cursor-pointer transition border-gray-200 hover:border-gold-500 hover:shadow-md">
                 <div class="flex items-center">
                     ${groomer.image ?
                         `<img src="${groomer.image}" alt="${groomer.name}" class="w-12 h-12 rounded-full object-cover mr-3">` :
@@ -488,9 +583,19 @@ window.BookingModal = (function() {
             renderBreeds();
             renderServices();
 
-            // Load preloaded data if available
-            const preloadedDog = window.preloadedDog;
-            const preloadedCustomer = window.preloadedCustomer;
+            // Load preloaded data from JSON data element if available
+            let modalData = {};
+            const dataElement = document.getElementById('booking-modal-preloaded-data');
+            if (dataElement) {
+                try {
+                    modalData = JSON.parse(dataElement.textContent || '{}');
+                } catch (e) {
+                    console.warn('Failed to parse preloaded data:', e);
+                }
+            }
+
+            const preloadedDog = modalData.preloadedDog;
+            const preloadedCustomer = modalData.preloadedCustomer;
 
             if (preloadedDog) {
                 state.bookingData.dogName = preloadedDog.name;
@@ -520,14 +625,63 @@ window.BookingModal = (function() {
                 state.bookingData.customerName = preloadedCustomer.name;
                 state.bookingData.customerPhone = preloadedCustomer.phone;
                 state.bookingData.customerEmail = preloadedCustomer.email;
+                // Note: Customer fields will be populated when step 7 becomes visible via populateCustomerData()
+            }
 
-                // Pre-fill customer fields
-                const nameInput = document.getElementById('customer-name');
-                if (nameInput) nameInput.value = preloadedCustomer.name || '';
-                const phoneInput = document.getElementById('customer-phone');
-                if (phoneInput) phoneInput.value = preloadedCustomer.phone || '';
-                const emailInput = document.getElementById('customer-email');
-                if (emailInput) emailInput.value = preloadedCustomer.email || '';
+            // Handle preloaded groomer (set state directly, don't need DOM elements)
+            const preloadedGroomer = modalData.preloadedGroomer;
+            if (preloadedGroomer && preloadedGroomer.id) {
+                const groomerId = parseInt(preloadedGroomer.id);
+                const groomer = state.groomers.find(g => g.id === groomerId);
+                // Set state directly - don't need DOM elements when jumping to later steps
+                state.bookingData.groomId = groomerId;
+                state.bookingData.groomerId = groomerId;
+                state.bookingData.groomerName = groomer?.name || preloadedGroomer.name || 'Preferred Groomer';
+            }
+
+            // Handle preloaded service
+            const preloadedService = modalData.preloadedService;
+            if (preloadedService && preloadedService.id) {
+                state.bookingData.serviceId = preloadedService.id.toString();
+                const serviceSelect = document.getElementById('service-select');
+                if (serviceSelect) serviceSelect.value = preloadedService.id;
+            }
+
+            // Handle start_at_step - jump to the specified step after preloading
+            const startAtStep = modalData.startAtStep || 1;
+            if (startAtStep > 1 && startAtStep <= state.totalSteps) {
+
+                // Ensure groomer ID is set before proceeding to step 4
+                if (startAtStep >= 4 && !state.bookingData.groomerId) {
+                    console.warn('No groomer ID set when starting at step 4, resetting to step 1');
+                    state.currentStep = 1;
+                    state.bookingData.groomerId = null;
+                    state.bookingData.groomId = null;
+                    state.bookingData.groomerName = null;
+                }
+                // Call corresponding load functions when jumping to later steps
+                else if (startAtStep >= 4 && !state.availableDays.length) {
+                    // Load days when jumping to day selection
+                    await showStep4();
+                    // Set currentStep AFTER loading to avoid showing loading state
+                    state.currentStep = startAtStep;
+                } else {
+                    // Set currentStep directly
+                    state.currentStep = startAtStep;
+                }
+            } else {
+                // Starting from step 1: reset groomer selection to force explicit user selection
+                // This prevents preloaded groomer data from allowing users to skip selection
+                state.bookingData.groomerId = null;
+                state.bookingData.groomId = null;
+                state.bookingData.groomerName = null;
+
+                // Reset groomer selection visual state
+                const groomerCards = document.querySelectorAll('.groomer-card');
+                groomerCards.forEach(card => {
+                    card.classList.remove('border-gold-500', 'bg-gold-100');
+                    card.classList.add('border-gray-200');
+                });
             }
 
             updateUI();
@@ -558,8 +712,10 @@ window.BookingModal = (function() {
             currentStepEl.classList.remove('hidden');
         }
 
-        // Update progress
-        updateProgress();
+        // Populate customer data when step 7 becomes visible
+        if (state.currentStep === 7) {
+            populateCustomerData();
+        }
 
         // Update navigation buttons
         const navButtons = document.getElementById('booking-nav-buttons');
@@ -567,34 +723,49 @@ window.BookingModal = (function() {
             navButtons.classList.remove('hidden');
         }
         document.getElementById('prev-button').classList.toggle('hidden', state.currentStep === 1);
-        document.getElementById('next-button').classList.toggle('hidden', state.currentStep === 7);
+        document.getElementById('next-button').classList.toggle('hidden', state.currentStep === state.totalSteps);
 
         // Update step title
         document.getElementById('step-title').textContent = stepLabels[state.currentStep] || '';
+
+        // Show/hide groomer note only on step 1
+        const groomerNote = document.getElementById('groomer-note');
+        if (groomerNote) {
+            groomerNote.classList.toggle('hidden', state.currentStep !== 1);
+        }
+
+        // Update progress indicator
+        updateProgress();
     }
 
     function updateProgress() {
         const stepItems = document.querySelectorAll('.step-item');
-        const stepCircles = document.querySelectorAll('.step-circle');
 
-        stepCircles.forEach((circle, index) => {
-            const step = parseInt(circle.dataset.step);
+        stepItems.forEach((item) => {
+            const step = parseInt(item.dataset.step);
+            const num = item.querySelector('.step-num');
+            const check = item.querySelector('.step-check');
+            const label = item.querySelector('.step-label');
+
+            num.classList.remove('text-black', 'text-gray-400', 'text-gold-600');
+            label.classList.remove('text-black', 'text-gray-400', 'text-gold-600', 'font-bold', 'font-normal');
+
             if (step < state.currentStep) {
-                circle.style.backgroundColor = 'rgb(34 197 94)';
-            } else if (step === state.currentStep) {
-                circle.style.backgroundColor = 'rgb(20 184 166)';
+                // Completed step - show checkmark
+                num.classList.add('hidden');
+                check.classList.remove('hidden');
+                label.classList.add('text-gold-600', 'font-bold');
             } else {
-                circle.style.backgroundColor = 'rgb(229 231 235)';
-            }
-        });
-
-        // Update segments - color them green if we've passed that step
-        stepItems.forEach((item, index) => {
-            const stepNumber = index + 1;
-            if (stepNumber < state.currentStep) {
-                item.classList.add('line-green');
-            } else {
-                item.classList.remove('line-green');
+                // Current or future step - show number
+                num.classList.remove('hidden');
+                check.classList.add('hidden');
+                if (step === state.currentStep) {
+                    num.classList.add('text-black');
+                    label.classList.add('text-black', 'font-bold');
+                } else {
+                    num.classList.add('text-gray-400');
+                    label.classList.add('text-gray-400', 'font-normal');
+                }
             }
         });
     }
@@ -605,13 +776,13 @@ window.BookingModal = (function() {
         state.bookingData.groomerName = name;
 
         document.querySelectorAll('.groomer-card').forEach(card => {
-            card.classList.remove('border-teal-500', 'bg-teal-50');
+            card.classList.remove('border-gold-500', 'bg-gold-100');
             card.classList.add('border-gray-200');
         });
 
         if (element) {
             element.classList.remove('border-gray-200');
-            element.classList.add('border-teal-500', 'bg-teal-50');
+            element.classList.add('border-gold-500', 'bg-gold-100');
         }
     }
 
@@ -692,13 +863,13 @@ window.BookingModal = (function() {
         state.bookingData.selectedDateDisplay = display;
 
         document.querySelectorAll('#available-days-list > div').forEach(day => {
-            day.classList.remove('border-teal-500', 'bg-teal-50');
+            day.classList.remove('border-gold-500', 'bg-gold-100');
             day.classList.add('border-gray-200');
         });
 
         if (element) {
             element.classList.remove('border-gray-200');
-            element.classList.add('border-teal-500', 'bg-teal-50');
+            element.classList.add('border-gold-500', 'bg-gold-100');
         }
     }
 
@@ -708,21 +879,21 @@ window.BookingModal = (function() {
 
         // Clear all slot selections
         document.querySelectorAll('.slot-primary').forEach(slot => {
-            slot.classList.remove('border-teal-500', 'bg-teal-50');
+            slot.classList.remove('border-gold-500', 'bg-gold-100');
             slot.classList.add('border-gray-200');
         });
         document.querySelectorAll('.slot-override').forEach(slot => {
-            slot.classList.remove('border-amber-500', 'bg-amber-100');
-            slot.classList.add('border-amber-300');
+            slot.classList.remove('border-gold-500', 'bg-gold-100');
+            slot.classList.add('border-gold-300');
         });
 
         if (element) {
             if (isOverride) {
-                element.classList.remove('border-amber-300');
-                element.classList.add('border-amber-500', 'bg-amber-100');
+                element.classList.remove('border-gold-300');
+                element.classList.add('border-gold-500', 'bg-gold-100');
             } else {
                 element.classList.remove('border-gray-200');
-                element.classList.add('border-teal-500', 'bg-teal-50');
+                element.classList.add('border-gold-500', 'bg-gold-100');
             }
         }
     }
@@ -745,7 +916,7 @@ window.BookingModal = (function() {
             const safeDisplay = String(day.display || '').replace(/'/g, "\\'");
 
             return `<div onclick="window.BookingModal.selectDate('${safeDate}', '${safeDisplay}', this)"
-                 class="border rounded-lg p-4 cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition text-center border-gray-200">
+                 class="border rounded-lg p-4 cursor-pointer hover:border-gold-500 hover:bg-gold-100 transition text-center border-gray-200">
                 <div class="font-semibold text-gray-800">${safeWeekday}</div>
                 <div class="text-2xl font-bold text-gray-900">${safeDay}</div>
                 <div class="text-xs text-gray-600">${safeSlots} slots available</div>
@@ -765,11 +936,13 @@ window.BookingModal = (function() {
             const safeTime = String(slot.time || '');
             const safeDisplay = String(slot.display || '').replace(/'/g, "\\'");
             const safeDuration = String(slot.duration || '');
+            const hasSameCustomerBooking = slot.has_same_customer_booking || false;
 
             return `<div onclick="window.BookingModal.selectTime('${safeTime}', this, false)"
-                 class="slot-primary border rounded-lg p-4 cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition text-center border-gray-200">
+                 class="slot-primary border rounded-lg p-4 cursor-pointer hover:border-gold-500 hover:bg-gold-100 transition text-center border-gray-200">
                 <div class="font-semibold text-gray-800">${safeDisplay}</div>
                 ${safeDuration ? `<div class="text-xs text-gray-600">${safeDuration} min</div>` : ''}
+                ${hasSameCustomerBooking ? `<div class="text-xs text-blue-600 mt-1 italic">You have another dog booked</div>` : ''}
             </div>`;
         }).join('');
     }
@@ -788,13 +961,15 @@ window.BookingModal = (function() {
             const safeDuration = String(slot.duration || '');
             const groomerCount = slot.groomer_count || 0;
             const groomersList = (slot.groomers || []).map(g => g.groomer_name).join(', ');
+            const hasSameCustomerBooking = slot.has_same_customer_booking || false;
 
             return `<div onclick="window.BookingModal.selectTime('${safeTime}', this, true)"
-                 class="slot-override border rounded-lg p-4 cursor-pointer hover:border-amber-500 hover:bg-amber-50 transition text-center border-amber-300 bg-amber-50/30">
+                 class="slot-override border rounded-lg p-4 cursor-pointer hover:border-gold-500 hover:bg-gold-50 transition text-center border-gold-300 bg-gold-50/30">
                 <div class="font-semibold text-gray-800">${safeDisplay}</div>
                 ${safeDuration ? `<div class="text-xs text-gray-600">${safeDuration} min</div>` : ''}
-                <div class="text-xs text-amber-600 mt-1 font-medium">${groomerCount} groomer${groomerCount > 1 ? 's' : ''} available</div>
+                <div class="text-xs text-gold-600 mt-1 font-medium">${groomerCount} groomer${groomerCount > 1 ? 's' : ''} available</div>
                 <div class="text-xs text-gray-500 preference-note mb-1">Groomer preference not guaranteed</div>
+                ${hasSameCustomerBooking ? `<div class="text-xs text-blue-600 italic">You have another dog booked</div>` : ''}
                 ${groomersList ? `<div class="text-xs text-gray-600">${groomersList}</div>` : ''}
             </div>`;
         }).join('');
@@ -988,11 +1163,54 @@ window.BookingModal = (function() {
         await showStep5();
     }
 
-    function validateCurrentStep() {
+    async function loadActiveAgreement() {
+        try {
+            const response = await fetch('/api/v1/booking/active-agreement/');
+            const data = await response.json();
+            if (data.success) {
+                const agreement = data.data;
+                if (agreement.is_required && agreement.id) {
+                    state.activeAgreement = agreement;
+                    state.agreementVersionId = agreement.id;
+                    document.getElementById('agreement-title').textContent = agreement.title;
+                    document.getElementById('agreement-content').textContent = agreement.content;
+                    document.getElementById('agreement-loading').classList.add('hidden');
+                    document.getElementById('agreement-container').classList.remove('hidden');
+                    document.getElementById('no-agreement-container').classList.add('hidden');
+                } else {
+                    state.activeAgreement = null;
+                    state.agreementVersionId = null;
+                    document.getElementById('agreement-loading').classList.add('hidden');
+                    document.getElementById('agreement-container').classList.add('hidden');
+                    document.getElementById('no-agreement-container').classList.remove('hidden');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading agreement:', error);
+            state.activeAgreement = null;
+            state.agreementVersionId = null;
+            document.getElementById('agreement-loading').classList.add('hidden');
+            document.getElementById('agreement-container').classList.add('hidden');
+            document.getElementById('no-agreement-container').classList.remove('hidden');
+        }
+    }
+
+    function validateAgreement() {
+        if (!state.activeAgreement) return true; // No agreement required, can skip
+        const accepted = document.getElementById('agreement-accepted').checked;
+        if (!accepted) {
+            document.getElementById('agreement-error').classList.remove('hidden');
+            return false;
+        }
+        document.getElementById('agreement-error').classList.add('hidden');
+        return true;
+    }
+
+    async function validateCurrentStep() {
         state.bookingData.dogAge = document.getElementById('dog-age').value;
 
-        // Update contact information state for step 6 validation
-        if (state.currentStep >= 6) {
+        // Update contact information state for step 7 validation
+        if (state.currentStep >= 7) {
             state.bookingData.serviceId = document.getElementById('service-select').value;
             state.bookingData.customerName = document.getElementById('customer-name').value;
             state.bookingData.customerPhone = document.getElementById('customer-phone').value;
@@ -1003,61 +1221,89 @@ window.BookingModal = (function() {
         switch(state.currentStep) {
             case 1:
                 if (!state.bookingData.groomerId) {
-                    alert('Please select a groomer.');
+                    if (parent.showNotification) parent.showNotification('Please select a groomer to continue.', 'error');
+                    else if (window.showNotification) window.showNotification('Please select a groomer to continue.', 'error');
+                    else alert('Please select a groomer to continue.');
                     return false;
                 }
                 break;
             case 2:
                 if (!state.bookingData.breedId || !state.bookingData.dogWeight) {
-                    alert('Please select a breed and enter your dog\'s weight.');
+                    if (parent.showNotification) parent.showNotification('Please select a breed and enter your dog\'s weight to continue.', 'error');
+                    else if (window.showNotification) window.showNotification('Please select a breed and enter your dog\'s weight to continue.', 'error');
+                    else alert('Please select a breed and enter your dog\'s weight to continue.');
                     return false;
                 }
                 if (!state.bookingData.dogName) {
-                    alert('Please enter your dog\'s name.');
+                    if (parent.showNotification) parent.showNotification('Please enter your dog\'s name to continue.', 'error');
+                    else if (window.showNotification) window.showNotification('Please enter your dog\'s name to continue.', 'error');
+                    else alert('Please enter your dog\'s name to continue.');
                     return false;
                 }
                 break;
             case 3:
                 if (!state.bookingData.dogAge) {
-                    alert('Please enter your dog\'s age.');
+                    if (parent.showNotification) parent.showNotification('Please enter your dog\'s age to continue.', 'error');
+                    else if (window.showNotification) window.showNotification('Please enter your dog\'s age to continue.', 'error');
+                    else alert('Please enter your dog\'s age to continue.');
                     return false;
                 }
                 break;
             case 4:
                 if (!state.bookingData.selectedDate) {
-                    alert('Please select a date.');
+                    if (parent.showNotification) parent.showNotification('Please select a date for your appointment to continue.', 'error');
+                    else if (window.showNotification) window.showNotification('Please select a date for your appointment to continue.', 'error');
+                    else alert('Please select a date to continue.');
                     return false;
                 }
                 break;
             case 5:
                 if (!state.bookingData.selectedTime) {
-                    alert('Please select a time slot.');
+                    if (parent.showNotification) parent.showNotification('Please select a time slot for your appointment to continue.', 'error');
+                    else if (window.showNotification) window.showNotification('Please select a time slot for your appointment to continue.', 'error');
+                    else alert('Please select a time slot to continue.');
                     return false;
                 }
                 break;
             case 6:
+                if (!validateAgreement()) {
+                    return false;
+                }
+                break;
+            case 7:
                 if (!state.bookingData.serviceId) {
-                    alert('Please select a service.');
+                    if (parent.showNotification) parent.showNotification('Please select a service to continue.', 'error');
+                    else if (window.showNotification) window.showNotification('Please select a service to continue.', 'error');
+                    else alert('Please select a service to continue.');
                     return false;
                 }
                 if (!state.bookingData.customerName || !state.bookingData.customerPhone || !state.bookingData.customerEmail) {
-                    alert('Please fill in your contact information.');
+                    if (parent.showNotification) parent.showNotification('Please fill in your contact information to continue.', 'error');
+                    else if (window.showNotification) window.showNotification('Please fill in your contact information to continue.', 'error');
+                    else alert('Please fill in your contact information to continue.');
                     return false;
                 }
-                return bookAppointment();
+                return await bookAppointment();
         }
         return true;
     }
 
     async function nextStep() {
-        if (!validateCurrentStep()) return;
+        const isValid = await validateCurrentStep();
+        if (!isValid) return;
 
         if (state.currentStep < state.totalSteps) {
             state.currentStep++;
 
+            if (state.currentStep === 2) await loadCustomerDogs();
             if (state.currentStep === 4) await showStep4();
             if (state.currentStep === 5) await showStep5();
-            if (state.currentStep === 6) await updateSummary();
+            if (state.currentStep === 6) await loadActiveAgreement();
+            if (state.currentStep === 7) {
+                // Populate customer data before reading it in updateSummary
+                populateCustomerData();
+                await updateSummary();
+            }
             updateUI();
         }
     }
@@ -1088,7 +1334,8 @@ window.BookingModal = (function() {
                 dog_age: state.bookingData.dogAge,
                 selected_date: state.bookingData.selectedDate,
                 selected_time: state.bookingData.selectedTime,
-                notes: state.bookingData.notes || ''
+                notes: state.bookingData.notes || '',
+                agreement_version_id: state.agreementVersionId || null
             };
 
             // For override slots, the actual_groomer would be different
@@ -1108,23 +1355,56 @@ window.BookingModal = (function() {
 
             if (data.success) {
                 state.confirmedAppointment = data.data.appointment;
-                state.loading = false;
-                state.currentStep++;
                 updateSummary();
                 renderConfirmation();
-                updateUI();
+                state.loading = false;
                 return true;
             } else {
-                alert('Error: ' + (data.message || data.error || 'Failed to book appointment'));
+                const errorMsg = 'Error: ' + (data.message || data.error || 'Failed to book appointment');
+                if (parent.showNotification) parent.showNotification(errorMsg, 'error');
+                else if (window.showNotification) window.showNotification(errorMsg, 'error');
+                else alert(errorMsg);
                 state.loading = false;
                 updateUI();
                 return false;
             }
         } catch (error) {
-            alert('Error: ' + error.message);
+            const errorMsg = 'Error: ' + error.message;
+            if (parent.showNotification) parent.showNotification(errorMsg, 'error');
+            else if (window.showNotification) window.showNotification(errorMsg, 'error');
+            else alert(errorMsg);
             state.loading = false;
             updateUI();
             return false;
+        }
+    }
+
+    function populateCustomerData() {
+        // Pre-fill customer data from preloaded data in state
+        let modalData = {};
+        const dataElement = document.getElementById('booking-modal-preloaded-data');
+        if (dataElement) {
+            try {
+                modalData = JSON.parse(dataElement.textContent || '{}');
+            } catch (e) {
+                console.warn('Failed to parse preloaded data:', e);
+            }
+        }
+
+        const preloadedCustomer = modalData.preloadedCustomer;
+
+        if (preloadedCustomer) {
+            state.bookingData.customerName = preloadedCustomer.name;
+            state.bookingData.customerPhone = preloadedCustomer.phone;
+            state.bookingData.customerEmail = preloadedCustomer.email;
+
+            // Pre-fill customer fields
+            const nameInput = document.getElementById('customer-name');
+            if (nameInput) nameInput.value = preloadedCustomer.name || '';
+            const phoneInput = document.getElementById('customer-phone');
+            if (phoneInput) phoneInput.value = preloadedCustomer.phone || '';
+            const emailInput = document.getElementById('customer-email');
+            if (emailInput) emailInput.value = preloadedCustomer.email || '';
         }
     }
 
@@ -1163,7 +1443,7 @@ window.BookingModal = (function() {
         }
     }
 
-    // Public API
+    // Public API - state is accessible through closure
     return {
         init,
         groomer,
@@ -1171,7 +1451,10 @@ window.BookingModal = (function() {
         updatePricePreview,
         selectDate,
         selectTime,
+        selectDogProfile,
         updateSummary,
+        loadActiveAgreement,
+        validateAgreement,
         nextStep,
         previousStep,
         retryLoadDays,

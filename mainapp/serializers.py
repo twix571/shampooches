@@ -160,13 +160,14 @@ class TimeSlotSerializer(serializers.ModelSerializer):
         return obj.start_time.strftime('%I:%M %p')
 
     def get_has_appointment(self, obj):
-        """Check if time slot has an active appointment."""
+        """Check if time slot has an appointment that blocks availability."""
         from .models import Appointment
+        from .constants import AppointmentStatus
         return Appointment.objects.filter(
             groomer=obj.groomer,
             date=obj.date,
             time=obj.start_time,
-            status__in=['pending', 'confirmed']
+            status__in=AppointmentStatus.BLOCKING_STATUSES
         ).exists()
 
 

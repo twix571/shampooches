@@ -19,7 +19,11 @@ from .apiviews import (
     BatchDayTimeSlotsView,
     # Pricing Management
     CloneBreedPricingView, CreateBreedWithCloneView,
-    BatchSavePricingManagementView
+    BatchSavePricingManagementView,
+    # Legal Agreements
+    ActiveAgreementView,
+    # Customer Dogs
+    CustomerDogsView
 )
 
 # DRF Router for v1 API
@@ -62,4 +66,14 @@ urlpatterns = router.urls + [
     path('admin/pricing/batch-save/', BatchSavePricingManagementView.as_view(), name='api_v1_batch_save_pricing_management'),
     path('admin/pricing/breed/clone/', CloneBreedPricingView.as_view(), name='api_v1_clone_breed_pricing'),
     path('admin/pricing/breed/create-with-clone/', CreateBreedWithCloneView.as_view(), name='api_v1_create_breed_with_clone'),
+
+    # =============================================================================
+    # Legal Agreement Endpoints
+    # =============================================================================
+    path('booking/active-agreement/', ActiveAgreementView.as_view(), name='api_v1_active_agreement'),
+
+    # =============================================================================
+    # Customer Dogs Endpoints
+    # =============================================================================
+    path('customer/dogs/', CustomerDogsView.as_view(), name='api_v1_customer_dogs'),
 ]

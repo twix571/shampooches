@@ -15,6 +15,7 @@ from django.template.loader import render_to_string
 from threading import local
 
 from .models import Appointment, SiteConfig
+from .constants import BusinessInfo
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,7 @@ def _send_email(appointment, site_config, email_type):
         send_mail(
             subject=subject,
             message=message,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@shampooches.com'),
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', BusinessInfo.DEFAULT_FROM_EMAIL),
             recipient_list=[appointment.customer.email],
             fail_silently=False,
         )
@@ -147,7 +148,7 @@ def _build_confirmation_email(appointment, site_config):
     Returns:
         str: Plain text email content
     """
-    business_name = site_config.business_name if site_config else 'Shampooches'
+    business_name = site_config.business_name if site_config else BusinessInfo.BUSINESS_NAME
     business_phone = site_config.phone if site_config else ''
 
     lines = [
@@ -190,7 +191,7 @@ def _build_confirmed_email(appointment, site_config):
     Returns:
         str: Plain text email content
     """
-    business_name = site_config.business_name if site_config else 'Shampooches'
+    business_name = site_config.business_name if site_config else BusinessInfo.BUSINESS_NAME
     business_phone = site_config.phone if site_config else ''
 
     lines = [
@@ -230,7 +231,7 @@ def _build_cancelled_email(appointment, site_config):
     Returns:
         str: Plain text email content
     """
-    business_name = site_config.business_name if site_config else 'Shampooches'
+    business_name = site_config.business_name if site_config else BusinessInfo.BUSINESS_NAME
     business_phone = site_config.phone if site_config else ''
 
     lines = [

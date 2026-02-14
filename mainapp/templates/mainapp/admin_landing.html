@@ -1,16 +1,16 @@
 {% extends "mainapp/base.html" %}
 {% load static %}
 {% load core_tags %}
-{% block title %}Admin Dashboard - Shampooches{% endblock %}
+{% block title %}Admin Dashboard - {{ site_config.business_name|default:"Shampooches"}}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-[var(--light-gold)]/50 via-white to-white/30">
+<div class="min-h-screen bg-white">
     <!-- Header -->
     <header class="bg-white/70 border-b border-[var(--gold)]/30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center space-x-4">
-                    <div class="w-10 h-10 rounded-xl shadow-sm flex items-center justify-center bg-[var(--gold)]">
+                    <div class="w-10 h-10 rounded-xl shadow-sm flex items-center justify-center bg-[#D4AF37]">
                         <svg class="w-5 h-5 text-[var(--primary-black)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                         </svg>
@@ -22,7 +22,8 @@
                 </div>
                 <nav class="flex items-center space-x-6">
                     <a href="{% url 'customer_landing' %}" class="text-[var(--dark-gray)] hover:text-[var(--primary-black)] text-sm font-medium transition-colors hover:bg-[var(--light-gold)] px-3 py-2 rounded-lg">Customer Landing</a>
-                    <a href="{% url 'custom_logout' %}" class="px-4 py-2 bg-[var(--primary-black)] text-white rounded-lg hover:bg-black transition shadow-sm text-sm font-medium">Logout</a>
+                    <a href="{% url 'staff_contact_page' %}" class="text-[var(--dark-gray)] hover:text-[var(--primary-black)] text-sm font-medium transition-colors hover:bg-[var(--light-gold)] px-3 py-2 rounded-lg">Contact</a>
+                    <a href="{% url 'custom_logout' %}" class="px-4 py-2 bg-[#0F172A] text-white rounded-lg hover:bg-black transition shadow-sm text-sm font-medium">Logout</a>
                 </nav>
             </div>
         </div>
@@ -32,10 +33,10 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Alert Banner (if pending confirmations) -->
         {% if metrics.alerts.has_alerts %}
-        <div class="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 flex items-center space-x-4">
+        <div class="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center space-x-4">
             <div class="flex-shrink-0">
                 <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77-1.333.192 3 1.732 3z"></path>
                 </svg>
             </div>
             <div class="flex-1">
@@ -49,240 +50,186 @@
                     {% endif %}
                 </p>
             </div>
-            <button hx-get="{% url 'appointments_modal' %}" hx-target="#modal-content" hx-push-url="false" class="px-3 py-1.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition">
-                Review
-            </button>
         </div>
         {% endif %}
 
-        <!-- Top Row: Priority Metrics (never scroll to see these) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-            <!-- Today's Revenue -->
-            <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-6">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-sm font-medium text-[var(--dark-gray)]">Today's Revenue</span>
-                    <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+        <!-- Two-Column Layout -->
+        <div class="grid lg:grid-cols-[20%_1fr] gap-6 mb-8 items-start">
+            <!-- Today's Schedule (First Content) -->
+            <div class="lg:row-span-3">
+                <div class="bg-white rounded-2xl shadow-sm border border-[var(--gold)]/30 sticky top-4">
+                    <div class="px-4 py-4 border-b border-[var(--gold)]/30">
+                        <h2 class="text-base font-semibold text-[var(--primary-black)]">Today's Schedule</h2>
+                        <span class="text-xs text-[var(--text-gray)]">{{ today|date:"F j, Y" }}</span>
                     </div>
-                </div>
-                <p class="text-2xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.today_revenue|floatformat:2 }}</p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">Confirmed & completed today</p>
-            </div>
-
-            <!-- Appointments Today -->
-            <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-6">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-sm font-medium text-[var(--dark-gray)]">Appointments Today</span>
-                    <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-2xl font-bold text-[var(--primary-black)]">{{ metrics.appointments.today_appointments }}</p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">Scheduled for today</p>
-            </div>
-
-            <!-- Pending Actions -->
-            <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-6">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-sm font-medium text-[var(--dark-gray)]">Pending Actions</span>
-                    <div class="w-8 h-8 {% if metrics.appointments.pending_appointments > 0 %}bg-amber-50{% else %}bg-slate-50{% endif %} rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-2xl font-bold text-[var(--primary-black)]">{{ metrics.appointments.pending_appointments }}</p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">Awaiting confirmation</p>
-            </div>
-
-            <!-- Monthly Revenue -->
-            <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-6">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-sm font-medium text-[var(--dark-gray)]">Monthly Revenue</span>
-                    <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-2xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.monthly_revenue|floatformat:0 }}</p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">This month's earnings</p>
-            </div>
-
-            <!-- Active Customers -->
-            <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-6">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-sm font-medium text-[var(--dark-gray)]">Active Customers</span>
-                    <div class="w-8 h-8 bg-cyan-50 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-2xl font-bold text-[var(--primary-black)]">{{ metrics.customers.active_customers }}</p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">Total active clients</p>
-            </div>
-        </div>
-
-        <!-- Secondary Metrics Row -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <!-- Average Ticket Value -->
-            <div class="bg-white/80 rounded-xl shadow-sm border border-[var(--gold)]/20 p-5">
-                <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">Average Ticket Value</p>
-                <p class="text-xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.average_ticket_value|floatformat:2 }}</p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">Industry avg: ~$50</p>
-            </div>
-
-            <!-- No-Show Rate -->
-            <div class="bg-white/80 rounded-xl shadow-sm border border-[var(--gold)]/20 p-5">
-                <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">No-Show Rate</p>
-                <p class="text-xl font-bold {% if metrics.appointments.no_show_rate < 10 %}text-green-600{% elif metrics.appointments.no_show_rate < 15 %}text-amber-600{% else %}text-red-600{% endif %}">
-                    {{ metrics.appointments.no_show_rate }}%
-                </p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">Warning above 15%</p>
-            </div>
-
-            <!-- Retention Rate -->
-            <div class="bg-white/80 rounded-xl shadow-sm border border-[var(--gold)]/20 p-5">
-                <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">Client Retention</p>
-                <p class="text-xl font-bold {% if metrics.customers.customer_retention_rate >= 70 %}text-green-600{% elif metrics.customers.customer_retention_rate >= 50 %}text-amber-600{% else %}text-red-600{% endif %}">
-                    {{ metrics.customers.customer_retention_rate }}%
-                </p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">Target: 80%+</p>
-            </div>
-
-            <!-- New Guest Rebooking -->
-            <div class="bg-white/80 rounded-xl shadow-sm border border-[var(--gold)]/20 p-5">
-                <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">New Guest Rebooking</p>
-                <p class="text-xl font-bold {% if metrics.customers.new_guest_rebooking_rate >= 35 %}text-green-600{% elif metrics.customers.new_guest_rebooking_rate >= 25 %}text-amber-600{% else %}text-red-600{% endif %}">
-                    {{ metrics.customers.new_guest_rebooking_rate }}%
-                </p>
-                <p class="text-xs text-[var(--text-gray)] mt-1">Benchmark: 35%</p>
-            </div>
-        </div>
-
-        <!-- Dashboard Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Today's Schedule (takes 2/3 on large screens) -->
-            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-[var(--gold)]/30">
-                <div class="px-8 py-5 border-b border-[var(--gold)]/30 flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-[var(--primary-black)]">Today's Schedule</h2>
-                    <span class="text-sm text-[var(--text-gray)]">{{ today|date:"F j, Y" }}</span>
-                </div>
-                <div class="p-8">
-                    {% if today_schedule %}
-                        <div class="space-y-4">
-                            {% for appointment in today_schedule %}
-                                <div class="group flex items-center justify-between p-5 rounded-xl border border-[var(--gold)]/30 hover:border-[var(--gold)] hover:shadow-md transition-all duration-300">
-                                    <div class="flex items-center space-x-5">
-                                        <div class="w-14 h-14 bg-gradient-to-br from-[var(--light-gold)] to-white rounded-xl flex items-center justify-center">
-                                            <svg class="w-7 h-7 text-[var(--gold)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1">
-                                            <p class="font-semibold text-[var(--primary-black)]">{{ appointment.customer.name }}</p>
-                                            <p class="text-sm text-[var(--dark-gray)] mt-1">{{ appointment.service.name }} - {{ appointment.dog_name }}</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-semibold text-[var(--primary-black)] text-lg">
-                                            {% if appointment.time %}
-                                                {{ appointment.time|time:"H:i" }}
-                                            {% else %}
-                                                TBA
-                                            {% endif %}
-                                        </p>
-                                        <div class="flex items-center justify-end space-x-3 mt-3">
-                                            <select
-                                                data-appointment-id="{{ appointment.id }}"
-                                                class="status-select px-4 py-2 text-xs font-semibold rounded-lg border border-[var(--gold)]/30 bg-[var(--light-gold)]/30 text-[var(--dark-gray)] hover:border-[var(--gold)] hover:bg-white focus:outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/20 transition-all cursor-pointer">
-                                                <option value="pending" {% if appointment.status == 'pending' %}selected{% endif %}>Pending</option>
-                                                <option value="confirmed" {% if appointment.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
-                                                <option value="completed" {% if appointment.status == 'completed' %}selected{% endif %}>Completed</option>
-                                                <option value="cancelled" {% if appointment.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
-                                            </select>
-                                            {% status_badge appointment.status %}
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-16">
-                            <div class="w-16 h-16 bg-[var(--light-gold)]/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-8 h-8 text-[var(--gold)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                            </div>
-                            <p class="text-[var(--text-gray)] font-medium">No appointments scheduled for today</p>
-                            <p class="text-[var(--text-gray)] text-sm mt-1">Check back later for bookings</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Staff Performance & Quick Actions (takes 1/3) -->
-            <div class="space-y-6">
-                <!-- Staff Performance -->
-                <div class="bg-white rounded-2xl shadow-sm border border-[var(--gold)]/30">
-                    <div class="px-6 py-4 border-b border-[var(--gold)]/30">
-                        <h3 class="text-lg font-semibold text-[var(--primary-black)]">Top Groomers (This Month)</h3>
-                    </div>
-                    <div class="p-4">
-                        {% if metrics.staff.groomer_performance %}
-                            <div class="space-y-3">
-                                {% for groomer in metrics.staff.groomer_performance|slice:":3" %}
-                                    <div class="flex items-center justify-between p-3 rounded-lg bg-[var(--light-gold)]/20">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 bg-[var(--gold)]/20 rounded-full flex items-center justify-center text-xs font-bold text-[var(--gold)]">
-                                                {{ groomer.groomer_name|slice:":2"|upper }}
+                    <div class="p-3 max-h-[400px] overflow-y-auto custom-scrollbar">
+                        <style>
+                            .custom-scrollbar::-webkit-scrollbar {
+                                width: 8px;
+                            }
+                            .custom-scrollbar::-webkit-scrollbar-thumb {
+                                background: #D4AF37;
+                                border-radius: 4px;
+                            }
+                            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                                background: #C59F2D;
+                            }
+                            .appointment-pending { border-color: #F59E0B !important; background-color: #FEF3C7 !important; }
+                            .appointment-pending .time-badge { color: #D97706 !important; }
+                            .appointment-confirmed { border-color: #22C55E !important; background-color: #F0FDF4 !important; }
+                            .appointment-confirmed .time-badge { color: #16A34A !important; }
+                            .appointment-completed { border-color: #9CA3AF !important; background-color: #F9FAFB !important; }
+                            .appointment-completed .time-badge { color: #6B7280 !important; }
+                            .appointment-cancelled { border-color: #EF4444 !important; background-color: #FEF2F2 !important; }
+                            .appointment-cancelled .time-badge { color: #DC2626 !important; text-decoration: line-through; }
+                        </style>
+                        {% if today_schedule %}
+                            <!-- Active Appointments -->
+                            {% regroup today_schedule by status as status_groups %}
+                            {% for status, appointments in status_groups %}
+                                {% if status != 'cancelled' %}
+                                    <div class="space-y-3 mb-4">
+                                        <h3 class="text-xs font-semibold text-[var(--dark-gray)] uppercase tracking-wide">{{ status|title }}</h3>
+                                        {% for appointment in appointments %}
+                                            <div class="group p-3 rounded-lg border hover:scale-[1.02] transition-all duration-200 appointment-{{ status }}">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <div class="text-sm font-semibold time-badge">
+                                                        {% if appointment.time %}
+                                                            {{ appointment.time|time:"h:i A" }}
+                                                        {% else %}
+                                                            TBA
+                                                        {% endif %}
+                                                    </div>
+                                                    {% if status == 'pending' %}
+                                                        <select
+                                                            data-appointment-id="{{ appointment.id }}"
+                                                            class="status-select px-2 py-1 text-xs font-medium rounded border border-[#D97706]/30 bg-white text-[#92400E] hover:border-[#D97706] focus:outline-none transition-all cursor-pointer">
+                                                            <option value="pending" selected>Pending</option>
+                                                            <option value="confirmed">Confirmed</option>
+                                                            <option value="completed">Completed</option>
+                                                            <option value="cancelled">Cancelled</option>
+                                                        </select>
+                                                    {% elif status == 'confirmed' %}
+                                                        <select
+                                                            data-appointment-id="{{ appointment.id }}"
+                                                            class="status-select px-2 py-1 text-xs font-medium rounded border border-[#16A34A]/30 bg-white text-[#15803D] hover:border-[#16A34A] focus:outline-none transition-all cursor-pointer">
+                                                            <option value="pending">Pending</option>
+                                                            <option value="confirmed" selected>Confirmed</option>
+                                                            <option value="completed">Completed</option>
+                                                            <option value="cancelled">Cancelled</option>
+                                                        </select>
+                                                    {% elif status == 'completed' %}
+                                                        <select
+                                                            data-appointment-id="{{ appointment.id }}"
+                                                            class="status-select px-2 py-1 text-xs font-medium rounded border border-[#6B7280]/30 bg-white text-[#374151] hover:border-[#6B7280] focus:outline-none transition-all cursor-pointer">
+                                                            <option value="pending">Pending</option>
+                                                            <option value="confirmed">Confirmed</option>
+                                                            <option value="completed" selected>Completed</option>
+                                                            <option value="cancelled">Cancelled</option>
+                                                        </select>
+                                                    {% endif %}
+                                                </div>
+                                                <p class="text-sm font-medium text-[var(--primary-black)]">{{ appointment.customer.name }}</p>
+                                                <p class="text-xs text-[var(--text-gray)]">{{ appointment.service.name }} · {{ appointment.dog_name }}</p>
                                             </div>
-                                            <span class="text-sm font-medium text-[var(--primary-black)]">{{ groomer.groomer_name }}</span>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-sm font-semibold text-[var(--primary-black)]">${{ groomer.revenue|floatformat:0 }}</p>
-                                            <p class="text-xs text-[var(--text-gray)]">{{ groomer.appointments }} appts</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+
+                            <!-- Cancelled Appointments (Collapsible) -->
+                            {% for status, appointments in status_groups %}
+                                {% if status == 'cancelled' %}
+                                    <div class="border-t border-[var(--gold)]/30 pt-3">
+                                        <button
+                                            type="button"
+                                            class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-[var(--text-gray)] hover:text-[var(--primary-black)] transition-colors"
+                                            onclick="toggleCancelled(this)">
+                                            <span>Cancelled ({{ appointments|length }})</span>
+                                            <svg class="w-4 h-4 transform transition-transform rotate-[-90deg]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </button>
+                                        <div class="cancelled-container hidden mt-2 space-y-3 px-1">
+                                            {% for appointment in appointments %}
+                                                <div class="group p-3 rounded-lg border opacity-75 appointment-cancelled">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <div class="text-sm font-semibold time-badge">
+                                                            {% if appointment.time %}
+                                                                {{ appointment.time|time:"h:i A" }}
+                                                            {% else %}
+                                                                TBA
+                                                            {% endif %}
+                                                        </div>
+                                                        <select
+                                                            data-appointment-id="{{ appointment.id }}"
+                                                            class="status-select px-2 py-1 text-xs font-medium rounded border border-[#DC2626]/30 bg-white text-[#991B1B] hover:border-[#DC2626] focus:outline-none transition-all cursor-pointer">
+                                                            <option value="pending">Pending</option>
+                                                            <option value="confirmed">Confirmed</option>
+                                                            <option value="completed">Completed</option>
+                                                            <option value="cancelled" selected>Cancelled</option>
+                                                        </select>
+                                                    </div>
+                                                    <p class="text-sm font-medium text-[var(--primary-black)]">{{ appointment.customer.name }}</p>
+                                                    <p class="text-xs text-[var(--text-gray)]">{{ appointment.service.name }} · {{ appointment.dog_name }}</p>
+                                                </div>
+                                            {% endfor %}
                                         </div>
                                     </div>
-                                {% endfor %}
-                            </div>
+                                {% endif %}
+                            {% endfor %}
                         {% else %}
-                            <p class="text-sm text-[var(--text-gray)] text-center py-4">No revenue data this month</p>
+                            <div class="text-center py-8">
+                                <div class="w-12 h-12 bg-[var(--light-gold)]/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                    <svg class="w-6 h-6 text-[var(--gold)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-[var(--text-gray)] font-medium text-sm">No appointments today</p>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
-
-                <!-- Pending Revenue Warning -->
-                {% if metrics.revenue.pending_revenue > 0 %}
-                <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-sm border border-amber-200">
-                    <div class="px-6 py-4">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <span class="text-sm font-medium text-amber-800">Pending Revenue</span>
-                        </div>
-                        <p class="text-2xl font-bold text-amber-900">${{ metrics.revenue.pending_revenue|floatformat:0 }}</p>
-                        <p class="text-xs text-amber-700 mt-1">Potential revenue at risk</p>
-                    </div>
-                </div>
-                {% endif %}
             </div>
-        </div>
 
-        <!-- Quick Action Cards -->
-        <h3 class="text-lg font-semibold text-[var(--primary-black)] mb-4">Quick Actions</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {% for card in action_cards %}
-                {% include "mainapp/partials/action_card_partial.html" with card=card %}
-            {% endfor %}
+            <!-- Metrics and Actions Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+                <!-- Weekly Revenue -->
+                <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-5">
+                    <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">Weekly Revenue</p>
+                    <p class="text-xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.weekly_revenue|floatformat:2 }}</p>
+                </div>
+
+                <!-- Appointments Today -->
+                <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-5 cursor-pointer hover:bg-gray-50 transition-colors"
+                     data-modal-url="{% url 'appointments_modal' %}">
+                    <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">Appointments Today</p>
+                    <p class="text-xl font-bold text-[var(--primary-black)]">{{ metrics.appointments.today_appointments|floatformat:0 }}</p>
+                </div>
+
+                <!-- Pending Actions -->
+                <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-5">
+                    <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">Pending Actions</p>
+                    <p class="text-xl font-bold text-[var(--primary-black)]">{{ metrics.appointments.pending_appointments|floatformat:0 }}</p>
+                </div>
+
+                <!-- Active Customers -->
+                <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-5">
+                    <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">Active Customers</p>
+                    <p class="text-xl font-bold text-[var(--primary-black)]">{{ metrics.customers.active_customers|floatformat:0 }}</p>
+                </div>
+
+                <!-- Monthly Revenue -->
+                <div class="bg-white rounded-xl shadow-sm border border-[var(--gold)]/30 p-5">
+                    <p class="text-sm font-medium text-[var(--dark-gray)] mb-2">Monthly Revenue</p>
+                    <p class="text-xl font-bold text-[var(--primary-black)]">${{ metrics.revenue.monthly_revenue|floatformat:2 }}</p>
+                </div>
+
+                <!-- Quick Action Cards -->
+                {% for card in action_cards %}
+                    {% include "mainapp/partials/action_card_partial.html" with card=card %}
+                {% endfor %}
+            </div>
         </div>
     </main>
 </div>
@@ -345,10 +292,10 @@
                     const oldBadge = appointmentRow.querySelector('[class*="inline-block"]');
                     if (oldBadge) {
                         const statusStyles = {
-                            'pending': 'bg-gradient-to-r from-amber-50 to-amber-100 text-amber-700 border border-amber-200',
-                            'confirmed': 'bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 border border-emerald-200',
-                            'completed': 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border border-blue-200',
-                            'cancelled': 'bg-gradient-to-r from-slate-50 to-slate-100 text-slate-600 border border-slate-200',
+                            'pending': 'bg-[#FDF6CC] text-[#967D21] border-[#D4AF37]',
+                            'confirmed': 'bg-[#F0FDF4] text-[#16A34A] border-[#22C55E]',
+                            'completed': 'bg-[#FEFDF5] text-[#584B0B] border-[#E5E7EB]',
+                            'cancelled': 'bg-[#F3F4F6] text-[#6B7280] border-[#D1D5DB]',
                         };
                         const displayStatus = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
                         const style = statusStyles[newStatus] || statusStyles['cancelled'];
@@ -379,6 +326,23 @@
     document.querySelectorAll('.status-select').forEach(select => {
         select.dataset.previousValue = select.value;
     });
+
+    // Toggle cancelled appointments section
+    window.toggleCancelled = function(button) {
+        const container = button.nextElementSibling;
+        const arrow = button.querySelector('svg');
+
+        if (container.classList.contains('hidden')) {
+            container.classList.remove('hidden');
+            arrow.classList.remove('rotate-[-90deg]');
+            arrow.classList.add('rotate-0');
+        } else {
+            container.classList.add('hidden');
+            arrow.classList.remove('rotate-0');
+            arrow.classList.add('rotate-[-90deg]');
+        }
+    };
+
 })();
 </script>
 {% endblock %}

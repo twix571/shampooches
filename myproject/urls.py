@@ -12,7 +12,7 @@ from django.conf.urls.static import static
 from rest_framework import routers
 
 from mainapp import views
-from mainapp.views import admin_views
+from mainapp.views import admin_views, messaging_views
 from mainapp.viewsets import (
     ServiceViewSet, BreedViewSet, GroomerViewSet, BreedServiceMappingViewSet
 )
@@ -50,8 +50,9 @@ urlpatterns = [
     path('customer/dogs/request-deletion-modal/<int:dog_id>/', views.request_dog_deletion_modal, name='request_dog_deletion_modal'),
     path('customer/dogs/request-deletion/<int:dog_id>/', views.request_dog_deletion, name='request_dog_deletion'),
     path('customer/dogs/book/<int:dog_id>/', views.book_with_dog, name='book_with_dog'),
-    
+
     # Appointment management URLs
+    path('customer/appointments/rebook/<int:appointment_id>/', views.rebook_appointment, name='rebook_appointment'),
     path('customer/appointments/cancel/<int:appointment_id>/', views.cancel_appointment, name='cancel_appointment'),
     path('customer/appointments/cancel-confirm/<int:appointment_id>/', views.cancel_appointment_confirm_modal, name='cancel_appointment_confirm_modal'),
     
@@ -72,6 +73,7 @@ urlpatterns = [
     path('groomers/', views.groomers_modal, name='groomers_modal'),
     path('admin/groomers-management/', views.groomers_management_modal, name='groomers_management_modal'),
     path('admin/site-config/', views.site_config_modal, name='site_config_modal'),
+    path('admin/legal-agreements/', views.legal_agreements_modal, name='legal_agreements_modal'),
     
     # Pricing management URLs
     path('admin/pricing/', views.pricing_management, name='pricing_management'),
@@ -88,6 +90,24 @@ urlpatterns = [
     # HTMX partial rendering URLs
     path('htmx/groomer-options/', views.render_groomer_options, name='htmx_groomer_options'),
     path('htmx/time-slots/', views.render_time_slots, name='htmx_time_slots'),
+
+    # Contact/Messaging URLs
+    path('contact/', messaging_views.contact_page, name='contact_page'),
+    path('contact/staff/', messaging_views.staff_contact_page, name='staff_contact_page'),
+    path('contact/authenticated/', messaging_views.contact_page_authenticated, name='contact_page_authenticated'),
+    path('contact/why-account/', messaging_views.why_create_account_page, name='why_create_account'),
+
+    # Messaging API endpoints
+    path('api/contact/threads/create/', messaging_views.create_message_thread, name='create_message_thread'),
+    path('api/contact/threads/<int:thread_id>/messages/', messaging_views.get_thread_messages, name='get_thread_messages'),
+    path('api/contact/threads/<int:thread_id>/send/', messaging_views.send_message, name='send_message'),
+    path('api/contact/threads/<int:thread_id>/update-view/', messaging_views.update_thread_view, name='update_thread_view'),
+    path('api/contact/threads/<int:thread_id>/typing/', messaging_views.set_typing_indicator, name='set_typing_indicator'),
+    path('api/contact/threads/<int:thread_id>/status/', messaging_views.get_thread_status, name='get_thread_status'),
+
+    # Staff messaging API endpoints
+    path('api/contact/staff/threads/', messaging_views.customer_threads_list, name='customer_threads_list'),
+    path('api/contact/staff/threads/<int:thread_id>/messages/', messaging_views.staff_thread_messages, name='staff_thread_messages'),
 
     # API URLs
     path('api/v1/', include('mainapp.api_v1_urls')),

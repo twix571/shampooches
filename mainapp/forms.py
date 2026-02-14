@@ -15,7 +15,7 @@ class DogForm(forms.ModelForm):
         label="Dog's Name",
         required=True,
         widget=forms.TextInput(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500',
             'placeholder': "Enter your dog's name",
         })
     )
@@ -24,7 +24,7 @@ class DogForm(forms.ModelForm):
         label="Breed",
         required=False,
         widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500',
         })
     )
 
@@ -32,7 +32,7 @@ class DogForm(forms.ModelForm):
         label="Weight (lbs)",
         required=False,
         widget=forms.NumberInput(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500',
             'placeholder': 'Weight in lbs',
             'step': '0.01',
             'min': '0.01',
@@ -43,7 +43,7 @@ class DogForm(forms.ModelForm):
         label="Age",
         required=False,
         widget=forms.TextInput(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500',
             'placeholder': 'e.g., 2 years, 6 months',
         })
     )
@@ -52,7 +52,7 @@ class DogForm(forms.ModelForm):
         label="Notes",
         required=False,
         widget=forms.Textarea(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500',
             'placeholder': 'Additional notes about your dog',
             'rows': 3,
         })

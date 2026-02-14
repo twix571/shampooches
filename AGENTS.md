@@ -790,3 +790,48 @@ orphaned_users = User.objects.filter(user_type='customer').exclude(customer_prof
 - Email notifications on status changes
 - Time slot availability checks
 - Conflict detection required
+
+### Multi-Dog Booking Feature (February 2026)
+Customers can now book multiple dogs for the same day, including the same time slot.
+
+**Key Features:**
+- Customers can book multiple dogs in the same time slot
+- Staff can configure `max_dogs_per_day` limit via Django admin (SiteConfig model)
+- Time slot visibility adjusts based on customer context:
+  - Time slots with customer's existing bookings remain **visible** to them
+  - Time slots with customer's existing bookings are **hidden** from other customers
+- Time slot data includes `has_same_customer_booking` boolean indicator for frontend styling
+
+**Technical Implementation:**
+1. **SiteConfig.max_dogs_per_day** - Configurable limit (default: 3)
+2. **Validation in `services.py`** - Checks daily limit: `existing_appointments >= max_dogs`
+3. **Time slot visibility in `utils.py`**:
+   - `get_available_time_slots()` accepts optional `customer` parameter
+   - Excludes current customer's existing appointments from "unavailable" check
+   - Adds `has_same_customer_booking` flag to time slot data
+4. **API integration in `apiviews.py`**:
+   - `BookingAvailableDaysView` and `BookingTimeSlotsView` pass customer context
+   - Automatically uses authenticated user's customer profile
+
+**Frontend Integration:**
+```javascript
+// Time slot data now includes:
+{
+    time: "14:00",
+    display: "02:00 PM",
+    duration: 0,
+    has_same_customer_booking: true  // New indicator
+}
+
+// Use this flag to add visual feedback:
+if (slot.has_same_customer_booking) {
+    // Show icon or styling indicating this slot has your other dogs
+    // Example: Add a multi-dog icon, different background color, etc.
+}
+```
+
+**Booking Flow Example:**
+1. Customer books Dog #1 at 2:00 PM → Slot remains **visible** (with `has_same_customer_booking=true`)
+2. Customer books Dog #2 at 2:00 PM (same slot) → Success
+3. Customer books Dog #3 at 3:00 PM → Success (still under daily limit)
+4. Customer tries Dog #4 → **Rejected**: "You have reached the maximum number of bookings (3) for this day"
