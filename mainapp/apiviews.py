@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from .models import (
     Appointment, Breed, BreedServiceMapping, Customer,
-    Groomer, Service, TimeSlot, LegalAgreement
+    Groomer, Service, TimeSlot, LegalAgreement, SiteConfig
 )
 from .serializers import (
     CalculatePriceRequestSerializer, CalculateFinalPriceRequestSerializer,
@@ -888,3 +888,56 @@ class CustomerDogsView(StandardAPIView):
             })
 
         return self.success_response(data={'dogs': dogs_data})
+
+
+class SiteConfigUpdateView(StandardAPIView):
+    """API endpoint for updating site configuration settings like max_dogs_per_day."""
+
+    @handle_api_errors('SiteConfigUpdateView')
+    def post(self, request):
+        """Update site configuration settings.
+
+        Accepts:
+            - max_dogs_per_day: Maximum number of dogs a customer can book in a single day (1-20)
+
+        Returns:
+            - success: True if update was successful
+            - message: Success message
+        """
+        # Check if user is admin
+        if not request.user.is_authenticated or request.user.user_type != 'admin':
+            return self.error_response(
+                message='Admin access required',
+                status_code=status.HTTP_403_FORBIDDEN
+            )
+
+        # Get the active site configuration
+        site_config = SiteConfig.get_active_config()
+
+        if not site_config:
+            return self.error_response(
+                message='No active site configuration found',
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        # Validate and update max_dogs_per_day
+        max_dogs_per_day = request.data.get('max_dogs_per_day')
+
+        if not max_dogs_per_day or not isinstance(max_dogs_per_day, int) or max_dogs_per_day < 1 or max_dogs_per_day > 20:
+            return self.error_response(
+                message='max_dogs_per_day must be an integer between 1 and 20',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update the setting
+        site_config.max_dogs_per_day = max_dogs_per_day
+        site_config.save()
+
+        logger.info(f"SiteConfig updated: max_dogs_per_day = {max_dogs_per_day} by user {request.user.username}")
+
+        return self.success_response(
+            data={
+                'success': True,
+                'message': f'Settings updated successfully. Maximum dogs per day is now {max_dogs_per_day}.'
+            }
+        )

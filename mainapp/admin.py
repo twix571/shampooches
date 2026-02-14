@@ -288,6 +288,9 @@ class SiteConfigAdmin(admin.ModelAdmin):
             ),
             'classes': ('collapse',)
         }),
+        ('Booking Configuration', {
+            'fields': ('max_dogs_per_day',)
+        }),
         ('Settings', {
             'fields': ('is_active',)
         }),

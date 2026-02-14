@@ -1,16 +1,70 @@
 <div class="p-8">
-    {% include "mainapp/partials/modal_header.html" with title="Customers" %}
+<script>
+(function() {
+    let searchTimeout;
+    const searchInput = document.getElementById('search-input');
+    const searchForm = document.getElementById('search-form');
+
+    if (searchInput && searchForm) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                if (searchInput.value.trim()) {
+                    searchForm.requestSubmit();
+                }
+            }, 1500);
+        });
+    }
+})();
+</script>
+    <!-- Custom header with search bar -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-3">
+            <h2 class="text-2xl font-semibold text-gray-800">Customers</h2>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Search Bar -->
+            <form id="search-form" method="GET" hx-get="{% url 'customers_modal' %}" hx-target="#modal-inner-content" class="flex items-center gap-2">
+                <div class="relative">
+                    <input
+                        id="search-input"
+                        type="text"
+                        name="search"
+                        value="{{ search_query|default:"" }}"
+                        placeholder="Search by name, email, or phone..."
+                        class="w-64 pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <button type="submit" class="px-3 py-1.5 text-sm text-purple-600 hover:text-purple-800 font-medium transition-colors">
+                    Search
+                </button>
+                {% if search_query %}
+                <a href="#" hx-get="{% url 'customers_modal' %}" hx-target="#modal-inner-content" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                    Clear
+                </a>
+                {% endif %}
+            </form>
+            <button onclick="closeModal()" class="px-3 py-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
 
     {% if customers %}
         <div class="space-y-4 max-h-96 overflow-y-auto">
             {% for customer in customers %}
-                <div class="border border-gray-200 rounded-lg p-4 hover:border-gold-400 hover:shadow-sm transition-all duration-200 group">
+                <button data-modal-url="{% url 'customer_detail_modal' customer.id %}" class="w-full text-left border border-gray-200 rounded-lg p-4 hover:border-gold-400 hover:shadow-sm transition-all duration-200 group">
                     <div class="flex items-start gap-4">
                         <div class="flex-shrink-0 w-10 h-10 bg-gold-200 rounded-full flex items-center justify-center shadow-sm">
                             <span class="text-gold-600 font-semibold text-sm">{{ customer.name|slice:":2"|upper }}</span>
                         </div>
                         <div class="flex-1">
-                            <div class="font-semibold text-gray-800 mb-1">{{ customer.name }}</div>
+                            <div class="font-semibold text-gray-800 mb-1">{{ customer.name }} <span class="text-gray-400 font-normal text-xs hover:text-gold-600 ml-2">View Details →</span></div>
                             <div class="text-sm text-gray-600 mb-1">{{ customer.email }}</div>
                             <div class="text-sm text-gray-500">{{ customer.phone }}</div>
                             {% if customer.address %}
@@ -26,11 +80,27 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </button>
             {% endfor %}
         </div>
     {% else %}
-        {% include "mainapp/partials/empty_state.html" with title="No customers found" subtitle="Customers will appear here after booking appointments" %}
+        {% if search_query %}
+            <div class="text-center py-8">
+                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-gray-600 font-medium">No customers found matching "{{ search_query }}"</p>
+                <p class="text-gray-500 text-sm mt-1">Try adjusting your search terms</p>
+            </div>
+        {% else %}
+            <div class="text-center py-8">
+                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <p class="text-gray-600 font-medium">No customers found</p>
+                <p class="text-gray-500 text-sm mt-1">Customers will appear here after booking appointments</p>
+            </div>
+        {% endif %}
     {% endif %}
 </div>
 

@@ -7,7 +7,8 @@
         </svg>
     </button>
 </div>
-<form method="post" action="{% url 'edit_dog' dog.id %}" class="p-6 space-y-4">
+
+<form id="edit-dog-form" method="post" class="p-6 space-y-4">
         {% csrf_token %}
         <div>
             <label for="edit_dog_name" class="block text-sm font-medium text-gray-700 mb-1">Dog's Name</label>
@@ -61,8 +62,74 @@
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-1000 focus:border-gold-1000"
             >{{ dog.notes|default:'' }}</textarea>
         </div>
+        <div id="form-errors" class="hidden"></div>
         <div class="flex justify-end space-x-3 pt-4">
             <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">Cancel</button>
             <button type="submit" class="px-4 py-2 bg-gold-1000 text-white rounded-lg hover:bg-gold-600 transition">Save Changes</button>
         </div>
     </form>
+
+<script>
+(function() {
+    const form = document.getElementById('edit-dog-form');
+
+    // Set form action based on user type
+    const isStaff = "{{ request.user.is_staff }}" === "True";
+    const dogId = {{ dog.id }};
+
+    if (isStaff) {
+        form.action = `/admin/edit-dog/${dogId}/`;
+    } else {
+        form.action = `/customer/dogs/edit/${dogId}/`;
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const actionUrl = form.action;
+
+        try {
+            const response = await fetch(actionUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Customer context: reload current page
+                const customerId = {{ customer_id|default:'null'|escapejs }};
+                if (customerId) {
+                    // Admin context: reopen customer detail modal
+                    openModal(`/admin/customer-detail/${customerId}/`);
+                } else {
+                    // Customer context: close modal and reload page
+                    closeModal({success: true});
+                    location.reload();
+                }
+            } else {
+                // Show errors
+                const errorDiv = document.getElementById('form-errors');
+                let errorHtml = '<div class="text-red-600 text-sm space-y-1">';
+                if (data.errors) {
+                    for (const [field, errors] of Object.entries(data.errors)) {
+                        errorHtml += `<div>${errors.join(', ')}</div>`;
+                    }
+                }
+                errorHtml += '</div>';
+                errorDiv.innerHTML = errorHtml || `<div class="text-red-600">Failed to update dog profile. Please try again.</div>`;
+                errorDiv.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            const errorDiv = document.getElementById('form-errors');
+            errorDiv.innerHTML = `<div class="text-red-600">An error occurred. Please try again.</div>`;
+            errorDiv.classList.remove('hidden');
+        }
+    });
+})();
+</script>

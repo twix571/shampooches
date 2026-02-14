@@ -162,6 +162,13 @@
 
     <!-- Right Click Context Menu -->
     <div id="context-menu" class="hidden fixed bg-white rounded-lg shadow-lg border border-gold-200 py-1 min-w-48" style="z-index: 9998;">
+        <button data-action="open-booking-settings" class="w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-2" style="transition: background-color 0.2s;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Booking Settings
+        </button>
+
         <button data-action="open-time-slot-editor" class="w-full px-4 py-2 text-left text-sm text-gray-700 flex items-center gap-2" style="transition: background-color 0.2s;">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -505,6 +512,19 @@
 
         // Load the time slot editor modal
         const url = '{% url "time_slot_editor_modal" %}?date=' + window.contextMenuDate + '&day_name=' + window.contextMenuDayName;
+        if (window.loadModalContent && typeof window.loadModalContent === 'function') {
+            window.loadModalContent(url);
+        }
+    }
+
+    window.openBookingSettingsModal = function openBookingSettingsModal() {
+        const contextMenu = document.getElementById('context-menu');
+        if (contextMenu) {
+            contextMenu.classList.add('hidden');
+        }
+
+        // Load the booking settings modal
+        const url = '{% url "booking_settings_modal" %}';
         if (window.loadModalContent && typeof window.loadModalContent === 'function') {
             window.loadModalContent(url);
         }
@@ -958,6 +978,12 @@
         const openTimeSlotBtn = event.target && event.target.closest ? event.target.closest('[data-action="open-time-slot-editor"]') : null;
         if (openTimeSlotBtn) {
             openTimeSlotEditor();
+        }
+
+        // Handle open-booking-settings button
+        const openBookingSettingsBtn = event.target && event.target.closest ? event.target.closest('[data-action="open-booking-settings"]') : null;
+        if (openBookingSettingsBtn) {
+            openBookingSettingsModal();
         }
 
         // Handle copy-all-groomers button

@@ -67,12 +67,18 @@ urlpatterns = [
     path('book-appointment/', views.book_appointment, name='book_appointment'),
     path('services/', views.services_list, name='services_list'),
     path('appointments/', views.appointments_modal, name='appointments_modal'),
-    
+    path('pending-review/', views.pending_review_modal, name='pending_review_modal'),
+
     # Management modals
     path('customers/', views.customers_modal, name='customers_modal'),
+    path('admin/customer-detail/<int:customer_id>/', admin_views.customer_detail_modal, name='customer_detail_modal'),
+    path('admin/customer-detail/<int:customer_id>/update-notes/', admin_views.update_customer_notes, name='update_customer_notes'),
+    path('admin/edit-dog-modal/<int:dog_id>/', admin_views.edit_customer_dog_modal, name='edit_customer_dog_modal'),
+    path('admin/edit-dog/<int:dog_id>/', admin_views.edit_customer_dog, name='edit_customer_dog'),
     path('groomers/', views.groomers_modal, name='groomers_modal'),
     path('admin/groomers-management/', views.groomers_management_modal, name='groomers_management_modal'),
     path('admin/site-config/', views.site_config_modal, name='site_config_modal'),
+    path('admin/booking-settings/', views.booking_settings_modal, name='booking_settings_modal'),
     path('admin/legal-agreements/', views.legal_agreements_modal, name='legal_agreements_modal'),
     
     # Pricing management URLs

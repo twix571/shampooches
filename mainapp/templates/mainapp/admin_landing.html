@@ -50,6 +50,14 @@
                     {% endif %}
                 </p>
             </div>
+            <div>
+                <button
+                    type="button"
+                    data-modal-url="{% url 'pending_review_modal' %}"
+                    class="px-4 py-2 bg-[#B5962C] hover:bg-[#9D8025] text-white rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                    Review
+                </button>
+            </div>
         </div>
         {% endif %}
 

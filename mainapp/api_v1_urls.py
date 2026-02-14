@@ -23,7 +23,9 @@ from .apiviews import (
     # Legal Agreements
     ActiveAgreementView,
     # Customer Dogs
-    CustomerDogsView
+    CustomerDogsView,
+    # Site Config
+    SiteConfigUpdateView
 )
 
 # DRF Router for v1 API
@@ -76,4 +78,9 @@ urlpatterns = router.urls + [
     # Customer Dogs Endpoints
     # =============================================================================
     path('customer/dogs/', CustomerDogsView.as_view(), name='api_v1_customer_dogs'),
+
+    # =============================================================================
+    # Site Configuration Endpoints
+    # =============================================================================
+    path('admin/siteconfig/update/', SiteConfigUpdateView.as_view(), name='api_v1_siteconfig_update'),
 ]

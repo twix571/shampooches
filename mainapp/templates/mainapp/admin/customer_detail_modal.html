@@ -1,0 +1,348 @@
+{% load core_tags %}
+<style>
+/* Customer detail modal specific styles */
+.timeline-item {
+    position: relative;
+    padding-left: 24px;
+}
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #D4AF37;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #D4AF37;
+}
+.timeline-container > .timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 20px;
+    bottom: -16px;
+    width: 2px;
+    background-color: #E5E7EB;
+}
+.status-badge-pending { background-color: #FEF3C7; color: #D97706; }
+.status-badge-confirmed { background-color: #D1FAE5; color: #059669; }
+.status-badge-completed { background-color: #DBEAFE; color: #1D4ED8; }
+.status-badge-cancelled { background-color: #FEE2E2; color: #DC2626; }
+</style>
+
+<script>
+function toggleNotesEdit() {
+    const viewMode = document.getElementById('notes-view-mode');
+    const editForm = document.getElementById('notes-edit-form');
+    const isHidden = editForm.classList.contains('hidden');
+
+    if (isHidden) {
+        viewMode.classList.add('hidden');
+        editForm.classList.remove('hidden');
+    } else {
+        viewMode.classList.remove('hidden');
+        editForm.classList.add('hidden');
+    }
+
+    return false;
+}
+
+// Listen for HTMX form submission success
+document.addEventListener('htmx:afterRequest', function(evt) {
+    const xhr = evt.detail.xhr;
+    if (evt.detail.target.id === 'notes-view-mode' && xhr.status === 200) {
+        // The success response already contains the updated notes HTML
+        const editForm = document.getElementById('notes-edit-form');
+        editForm.classList.add('hidden');
+    }
+});
+</script>
+
+<div class="p-6 max-h-[90vh] overflow-y-auto">
+    <!-- Custom header with back button -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-3">
+            <button data-modal-url="{% url 'customers_modal' %}" class="text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors px-3 py-1" title="Back to customers list">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800">{{ customer.name }}</h2>
+        </div>
+        <button onclick="closeModal()" class="px-3 py-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Customer Overview Section -->
+    <div class="mb-6 space-y-4">
+        <!-- Account Status & Contact Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gold-50 rounded-lg p-4 border border-gold-200">
+                <h3 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Account Information
+                </h3>
+                <div class="space-y-1 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-gray-700">Status:</span>
+                        {% if customer.user %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Registered User</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">Guest Account</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-gray-700">Name:</span>
+                        <span class="text-gray-600">{{ customer.name }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-gray-700">Email:</span>
+                        <span class="text-gray-600">{{ customer.email }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-gray-700">Phone:</span>
+                        <span class="text-gray-600">{{ customer.phone }}</span>
+                    </div>
+                    {% if customer.address %}
+                    <div class="flex items-start gap-2">
+                        <span class="font-medium text-gray-700">Address:</span>
+                        <span class="text-gray-600 whitespace-pre-line">{{ customer.address }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Revenue & Stats -->
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h3 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    Customer Statistics
+                </h3>
+                <div class="space-y-1 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium text-gray-700">Total Appointments:</span>
+                        <span class="text-gray-600">{{ total_appointments }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium text-gray-700">Completed Appointments:</span>
+                        <span class="text-gray-600">{{ completed_appointments }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium text-gray-700">Total Revenue:</span>
+                        <span class="font-semibold text-green-600">${{ total_revenue }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium text-gray-700">Average Service Price:</span>
+                        <span class="text-gray-600">${{ average_price }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Preferences -->
+        {% if customer.preferred_groomer %}
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <h3 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                </svg>
+                Booking Preferences
+            </h3>
+            <div class="text-sm text-gray-600">
+                <div class="flex items-center gap-2">
+                    <span class="font-medium">Preferred Groomer:</span>
+                    <span>{{ customer.preferred_groomer.name }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Notes & Classification -->
+    <div class="mb-6">
+        <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                    </svg>
+                    Notes & Tags
+                </h3>
+                <button onclick="toggleNotesEdit()" class="text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1 font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit
+                </button>
+            </div>
+
+            <!-- View Mode -->
+            <div id="notes-view-mode">
+                {% if customer.notes %}
+                    <div class="text-sm text-gray-700 whitespace-pre-line">{{ customer.notes }}</div>
+                {% else %}
+                    <p class="text-sm text-gray-500 italic">No notes added for this customer.</p>
+                {% endif %}
+            </div>
+
+            <!-- Edit Mode -->
+            <form id="notes-edit-form" class="hidden" hx-post="{% url 'update_customer_notes' customer.id %}" hx-target="#notes-view-mode" hx-swap="outerHTML">
+                {% csrf_token %}
+                <textarea
+                    name="notes"
+                    rows="6"
+                    class="w-full p-2 text-sm text-gray-700 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter customer notes and tags (e.g., 'VIP', 'New Customer', 'Requires special handling')..."
+                >{{ customer.notes|default:"" }}</textarea>
+                <div class="flex gap-2 mt-3">
+                    <button type="submit" class="px-4 py-1.5 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors">
+                        Save Notes
+                    </button>
+                    <button type="button" onclick="toggleNotesEdit()" class="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dog Profiles -->
+    <div class="mb-6">
+        <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Dog Profiles ({{ dogs|length }})
+        </h3>
+        {% if dogs %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {% for dog in dogs %}
+            <div class="bg-white rounded-lg p-3 border border-gray-200 hover:border-gold-300 transition-colors">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-12 h-12 bg-gold-100 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <div class="font-semibold text-gray-800">{{ dog.name }}</div>
+                            <button
+                                data-modal-url="{% url 'edit_customer_dog_modal' dog.id %}"
+                                class="text-sm text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50 transition-colors"
+                                title="Edit dog profile"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            {% if dog.breed %}
+                                {{ dog.breed.name }}
+                                {% if dog.weight %}• {{ dog.weight }} lbs{% endif %}
+                            {% else %}
+                                {% if dog.weight %}{{ dog.weight }} lbs{% else %}Breed unknown{% endif %}
+                            {% endif %}
+                            {% if dog.age %}• {{ dog.age }}{% endif %}
+                        </div>
+                        {% if dog.is_special_needs %}
+                        <div class="flex items-center gap-1 mt-1">
+                            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-xs text-red-600">Special Needs</span>
+                        </div>
+                        {% endif %}
+                        {% if dog.temperament %}
+                        <div class="flex items-center gap-1 mt-1">
+                            <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-xs text-blue-600">{{ dog.temperament }}</span>
+                        </div>
+                        {% endif %}
+                        {% if dog.notes %}
+                        <div class="text-xs text-gray-500 mt-1 italic">"{{ dog.notes|truncatewords:20 }}"</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-gray-50 rounded-lg p-4 text-center text-gray-500 italic">
+            No dog profiles found for this customer.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Appointment History Timeline -->
+    <div>
+        <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            Appointment History ({{ appointments|length }})
+        </h3>
+        {% if appointments %}
+        <div class="timeline-container space-y-4">
+            {% for appointment in appointments %}
+            <div class="timeline-item">
+                <div class="bg-white rounded-lg p-3 border border-gray-200 hover:border-gold-200 transition-colors">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-sm font-semibold text-gray-800">
+                                    {{ appointment.date|date:"M j, Y" }}
+                                    {% if appointment.time %}
+                                        at {{ appointment.time|date:"g:i A" }}
+                                    {% endif %}
+                                </span>
+                                <span class="px-2 py-0.5 text-xs rounded-full status-badge-{{ appointment.status }}">
+                                    {{ appointment.status|title }}
+                                </span>
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                <span class="font-medium">{{ appointment.dog_name }}</span>
+                                •
+                                {{ appointment.service.name }}
+                            </div>
+                            {% if appointment.groomer %}
+                            <div class="text-xs text-gray-500 mt-1">
+                                Groomer: {{ appointment.groomer.name }}
+                            </div>
+                            {% endif %}
+                            {% if appointment.price_at_booking %}
+                            <div class="text-sm font-semibold text-green-600 mt-1">${{ appointment.price_at_booking }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if appointment.notes %}
+                    <div class="text-xs text-gray-500 mt-2 italic">{{ appointment.notes }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="bg-gray-50 rounded-lg p-4 text-center text-gray-500 italic">
+                No appointment history found for this customer.
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-gray-50 rounded-lg p-4 text-center text-gray-500 italic">
+            No appointment history found for this customer.
+        </div>
+        {% endif %}
+    </div>
+</div>

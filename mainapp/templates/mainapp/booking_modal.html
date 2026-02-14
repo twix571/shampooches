@@ -722,7 +722,7 @@ window.BookingModal = (function() {
         if (navButtons) {
             navButtons.classList.remove('hidden');
         }
-        document.getElementById('prev-button').classList.toggle('hidden', state.currentStep === 1);
+        document.getElementById('prev-button').classList.toggle('hidden', state.currentStep === 1 || state.currentStep === state.totalSteps);
         document.getElementById('next-button').classList.toggle('hidden', state.currentStep === state.totalSteps);
 
         // Update step title

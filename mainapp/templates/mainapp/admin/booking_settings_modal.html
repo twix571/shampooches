@@ -1,0 +1,236 @@
+{% load core_tags %}
+<style>
+#confirm-modal #confirm-modal-message,
+#notification-modal #notification-modal-message {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+</style>
+<div class="p-6">
+    {% include "mainapp/partials/modal_header.html" with title="Booking Settings" %}
+
+    <form id="booking-settings-form" class="space-y-6">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+        <!-- Max Dogs Per Day -->
+        <div>
+            <label for="max_dogs_per_day" class="block text-sm font-medium text-gray-700 mb-1">
+                Maximum Dogs Per Day
+            </label>
+            <div class="flex items-center gap-4">
+                <input
+                    type="number"
+                    id="max_dogs_per_day"
+                    name="max_dogs_per_day"
+                    value="{{ site_config.max_dogs_per_day }}"
+                    min="1"
+                    max="20"
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-gold-500"
+                    required
+                />
+                <span class="text-sm text-gray-500">dogs</span>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">
+                Maximum number of dogs a customer can book in a single day. Default: 3
+            </p>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button type="button" class="modal-close-btn px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition shadow-sm font-medium">
+                Save Settings
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+        <div class="px-8 py-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-800">Confirm Action</h3>
+        </div>
+        <div class="p-8">
+            <p id="confirm-modal-message" class="text-gray-700 mb-6"></p>
+            <div class="flex justify-end space-x-3">
+                <button id="confirm-modal-cancel" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                    Cancel
+                </button>
+                <button id="confirm-modal-confirm" class="px-4 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition shadow-sm font-medium">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Notification Modal -->
+<div id="notification-modal" class="hidden fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+        <div class="px-8 py-6 border-b border-gray-200">
+            <h3 id="notification-modal-title" class="text-xl font-semibold text-gray-800"></h3>
+        </div>
+        <div class="p-8">
+            <p id="notification-modal-message" class="text-gray-700 mb-6"></p>
+            <div class="flex justify-end">
+                <button id="notification-modal-close" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    const form = document.getElementById('booking-settings-form');
+    const modalCloseBtns = document.querySelectorAll('.modal-close-btn');
+
+    // Handle modal close
+    modalCloseBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (window.closeModal) {
+                window.closeModal();
+            }
+        });
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const maxDogsFormInput = parseInt(document.getElementById('max_dogs_per_day').value);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        if (isNaN(maxDogsFormInput) || maxDogsFormInput < 1 || maxDogsFormInput > 20) {
+            showNotificationModal('Error', 'Please enter a valid number between 1 and 20.');
+            return;
+        }
+
+        // Show confirmation
+        const confirmMsg = `This will update the maximum dogs per day limit to ${maxDogsFormInput}.\n\nThis change will affect all future bookings.\n\nDo you want to continue?`;
+
+        showConfirmModal(confirmMsg, async () => {
+            try {
+                const response = await fetch('/api/v1/admin/siteconfig/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        max_dogs_per_day: maxDogsFormInput
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to update settings');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotificationModal('Success', 'Settings updated successfully.');
+                } else {
+                    throw new Error(data.error || 'Failed to update settings');
+                }
+
+            } catch (error) {
+                showNotificationModal('Error', error.message || 'Failed to update settings. Please try again.');
+            }
+        });
+    });
+
+    // Show confirmation modal
+    function showConfirmModal(message, onConfirm) {
+        const modal = document.getElementById('confirm-modal');
+        const messageEl = document.getElementById('confirm-modal-message');
+        const cancelBtn = document.getElementById('confirm-modal-cancel');
+        const confirmBtn = document.getElementById('confirm-modal-confirm');
+
+        messageEl.textContent = message;
+
+        // Remove previous event listeners
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+        // Add new event listeners
+        newCancelBtn.addEventListener('click', function() {
+            modal.classList.add('hidden');
+            hideContextMenu();
+        });
+
+        newConfirmBtn.addEventListener('click', function() {
+            modal.classList.add('hidden');
+            onConfirm();
+        });
+
+        modal.classList.remove('hidden');
+    }
+
+    // Show notification modal
+    function showNotificationModal(title, message) {
+        const modal = document.getElementById('notification-modal');
+        const titleEl = document.getElementById('notification-modal-title');
+        const messageEl = document.getElementById('notification-modal-message');
+        const closeBtn = document.getElementById('notification-modal-close');
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+
+        // Remove previous event listener
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+        // Add new event listener
+        newCloseBtn.addEventListener('click', function() {
+            modal.classList.add('hidden');
+
+            // Close the main modal if save was successful
+            if (title === 'Success' && window.closeModal) {
+                setTimeout(function() {
+                    window.closeModal();
+                }, 500);
+            }
+        });
+
+        modal.classList.remove('hidden');
+    }
+
+    // Close modals on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const confirmModal = document.getElementById('confirm-modal');
+            const notificationModal = document.getElementById('notification-modal');
+            if (confirmModal && !confirmModal.classList.contains('hidden')) {
+                confirmModal.classList.add('hidden');
+            }
+            if (notificationModal && !notificationModal.classList.contains('hidden')) {
+                notificationModal.classList.add('hidden');
+            }
+        }
+    });
+
+    // Close modals when clicking outside
+    document.addEventListener('click', function(e) {
+        const confirmModal = document.getElementById('confirm-modal');
+        const notificationModal = document.getElementById('notification-modal');
+
+        if (confirmModal && !confirmModal.classList.contains('hidden') && e.target === confirmModal) {
+            confirmModal.classList.add('hidden');
+        }
+
+        if (notificationModal && !notificationModal.classList.contains('hidden') && e.target === notificationModal) {
+            notificationModal.classList.add('hidden');
+        }
+    });
+})();
+</script>

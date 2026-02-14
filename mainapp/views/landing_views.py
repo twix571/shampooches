@@ -3,7 +3,7 @@
 from collections import defaultdict
 from datetime import date, timedelta
 
-from django.db.models import Case, IntegerField, Value, When
+from django.db.models import Case, Count, IntegerField, OuterRef, Subquery, Value, When
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -192,4 +192,60 @@ def appointments_modal(request: HttpRequest) -> HttpResponse:
         'calendar_data': calendar_data,
         'week_offset': week_offset,
         'all_appointments': appointments,
+    })
+
+
+@admin_required
+def pending_review_modal(request: HttpRequest) -> HttpResponse:
+    """
+    Admin modal for reviewing pending and unconfirmed appointments.
+
+    Displays:
+    - All pending appointments needing confirmation
+    - Upcoming unconfirmed appointments in the next 7 days
+    - Allows staff to quickly confirm/cancel appointments
+    - Multi-booking visual indicators when customer has multiple dogs booked
+    """
+    today = date.today()
+    week_ahead = today + timedelta(days=7)
+
+    # Get pending confirmations (all pending appointments)
+    pending_confirmations = list(Appointment.objects.filter(
+        status='pending'
+    ).order_by('date', 'time'))
+
+    # Compute multi-booking counts for each appointment
+    for apt in pending_confirmations:
+        same_day = Appointment.objects.filter(
+            customer=apt.customer,
+            date=apt.date,
+            status='pending'
+        ).count()
+        same_time = Appointment.objects.filter(
+            customer=apt.customer,
+            date=apt.date,
+            time=apt.time,
+            status='pending'
+        ).count()
+        apt.same_day_count = same_day
+        apt.same_time_count = same_time
+
+    # Get today's pending appointments for urgent section
+    today_pending = [apt for apt in pending_confirmations if apt.date == today]
+
+    # Get overdue pending appointments (in the past)
+    overdue_pending = [apt for apt in pending_confirmations if apt.date < today]
+
+    # Get future pending appointments
+    future_pending = [apt for apt in pending_confirmations if apt.date > today]
+
+    # For template rendering, convert filtered lists to querysets by using IDs
+    future_pending_qs = Appointment.objects.filter(id__in=[apt.id for apt in future_pending])
+    overdue_pending_qs = Appointment.objects.filter(id__in=[apt.id for apt in overdue_pending])
+
+    return render(request, 'mainapp/admin/pending_review_modal.html', {
+        'pending_confirmations': pending_confirmations,
+        'today_pending': today_pending,
+        'overdue_pending': overdue_pending_qs,
+        'future_pending': future_pending_qs,
     })

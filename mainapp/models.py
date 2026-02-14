@@ -317,6 +317,20 @@ class Customer(models.Model):
         null=True,
         help_text="Customer's address"
     )
+    preferred_groomer = models.ForeignKey(
+        'Groomer',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='preferred_customers',
+        db_index=True,
+        help_text="Customer's preferred groomer for bookings"
+    )
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Admin notes and customer classification tags (e.g., 'VIP', 'New Customer', 'Requires special handling')"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

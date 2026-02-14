@@ -237,17 +237,17 @@ def edit_dog(request: HttpRequest, dog_id: int) -> HttpResponse:
         return redirect('customer_profile')
 
     if request.method == 'POST':
+        from django.http import JsonResponse
+
         form = DogForm(request.POST, instance=dog)
         if form.is_valid():
             form.save()
-            add_message(request, constants.SUCCESS, 'Dog profile updated successfully!')
-            return redirect('customer_profile')
+            return JsonResponse({'success': True, 'message': 'Dog profile updated successfully!'}, status=200)
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    add_message(request, constants.ERROR, error)
+            errors = {field: [str(error) for error in errors] for field, errors in form.errors.items()}
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
 
-    return redirect('customer_profile')
+    return HttpResponse(status=405)
 
 
 @login_required
